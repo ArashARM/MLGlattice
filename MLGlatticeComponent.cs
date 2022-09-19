@@ -95,7 +95,7 @@ namespace MLGlattice
             Init();
 
             m_Voxels = GLFunctions.VoxelizeUnitcell(edgeSize, VoxNumberOnEdge);
-            m_solidVoxels = GLFunctions.MapGLatticeToVoxels(InputCVS, m_StRadii, m_Voxels);
+            //m_solidVoxels = GLFunctions.MapGLatticeToVoxels(InputCVS, m_StRadii, m_Voxels);
 
 
             DA.SetDataList(0, m_solidVoxels);

@@ -57,7 +57,7 @@ namespace Genlattice
         
         double m_alpha;
         double m_theta;
-        double m_PartDia;
+        double m_STradi;
         double m_vol;
         double STorCD;
         List<string> m_OutText;
@@ -83,7 +83,7 @@ namespace Genlattice
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddNumberParameter("Choice", "Choise", "1 for ST struts , 2 for CD struts", GH_ParamAccess.item);
-            pManager.AddNumberParameter("m_PartDia", "m_PartDia", "Particle diameter", GH_ParamAccess.item);
+            pManager.AddNumberParameter("m_STradi", "m_STradi", "Particle diameter", GH_ParamAccess.item);
             pManager.AddNumberParameter("Tau4", "Tau4", "Min Volume required", GH_ParamAccess.item);
             pManager.AddNumberParameter("VoxNum", "VoxNum", "number of voxels on each edge", GH_ParamAccess.item);
 
@@ -96,6 +96,10 @@ namespace Genlattice
         {
             pManager.AddCurveParameter("listedCurves", "listedCurves", "listedCurves", GH_ParamAccess.list);
             pManager.AddBrepParameter("Voxels", "Voxels", "Voxels", GH_ParamAccess.list);
+            pManager.AddNumberParameter("VoxIndex", "VoxIndex", "VoxIndex", GH_ParamAccess.item);
+            //pManager.AddNumberParameter("Fmax", "Fmax", "Fmax", GH_ParamAccess.item);
+            //pManager.AddNumberParameter("F/Vmax", "F/Vmax", "F/Vmax", GH_ParamAccess.item);
+            //pManager.AddNumberParameter("MaxSt", "MaxSt", "MaxSt", GH_ParamAccess.item);
 
 
         }
@@ -111,22 +115,53 @@ namespace Genlattice
             m_loadVecor = new Vector3d();
 
             DA.GetData(0, ref STorCD);
-            DA.GetData(1, ref m_PartDia);
+            DA.GetData(1, ref m_STradi);
             DA.GetData(2, ref m_Tau4);
             DA.GetData(3, ref m_VoxNumonEdge);
 
+            if (File.Exists(path))
+            {
+                System.IO.File.Delete(path);
+            }
 
-            //System.IO.File.Delete(path);
-            //System.IO.File.AppendAllText(path, " ParDia : ," + m_PartDia.ToString() + "," + "MaxOverhangANG : ," + m_Tau2.ToString() + "," + "MinPassANG : ," + m_Tau3.ToString() + "," + "VolRatio :," + "[" + (m_Tau4 * 100).ToString() + "% - " + (m_Tau5 * 100).ToString() + "%" + "]\n");
-            
             Init();
-            Genlattice();
 
+            System.IO.File.AppendAllText(path, " Model#" + ","  );
+            for (int i = 0; i < Math.Pow(m_VoxNumonEdge,3); i++)
+            {
+                System.IO.File.AppendAllText(path, "X" + i.ToString() + ",");
+                
+            }
+
+            System.IO.File.AppendAllText(path, "Y" + 0.ToString() + ",");
+            System.IO.File.AppendAllText(path, "Y" + 1.ToString() + "\n");
+
+            Genlattice();
             m_Voxels = GLFunctions.VoxelizeUnitcell(m_edgeSize, m_VoxNumonEdge);
-            m_solidVoxels = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_PartDia/2, m_Voxels);
+            m_solidVoxels = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_STradi/2, m_Voxels,out List<double> VoxIndes );
+            Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(m_CoreCurves, new Vector3d(0, 0, -0.001), 0.02, 0.04);
+
+            for (int j = 0; j < VoxIndes.Count; j++)
+            {
+                if (j==0)
+                    System.IO.File.AppendAllText(path, " Model"+j.ToString() + ",");
+
+                System.IO.File.AppendAllText(path, VoxIndes[j].ToString() + ",");
+            }
+
+            System.IO.File.AppendAllText(path, FEMresults.Item1.ToString() + ",");
+            System.IO.File.AppendAllText(path, FEMresults.Item3.ToString() + "\n");
+
+
+            m_CoreCurves = GLFunctions.UnitcellMakerNoscale(m_CoreCurves);
 
             DA.SetDataList(0, m_CoreCurves);
             DA.SetDataList(1, m_solidVoxels);
+            DA.SetDataList(2, VoxIndes);
+
+            //DA.SetData(2, FEMresults.Item1);
+            //DA.SetData(3, FEMresults.Item2);
+            //DA.SetData(4, FEMresults.Item3);
 
         }
 
@@ -139,8 +174,8 @@ namespace Genlattice
                 {
 
                     Point3d P0 = RandFirstPt();
-                    m_TrunkSet = ParTrace(P0, Vector3d.Zero, m_PartDia, true, out m_CoreCurves);
-                    m_SubLat = ParProfi(m_TrunkSet, m_CoreCurves, m_PartDia, out m_CoreCurves, out m_vol, out bool solved);
+                    m_TrunkSet = ParTrace(P0, Vector3d.Zero, m_STradi, true, out m_CoreCurves);
+                    m_SubLat = ParProfi(m_TrunkSet, m_CoreCurves, m_STradi, out m_CoreCurves, out m_vol, out bool solved);
 
                     if (solved == false)
                         continue;
@@ -163,8 +198,8 @@ namespace Genlattice
                     
 
                     Point3d P0 = RandFirstPt();
-                    m_TrunkSet = ParTraceCD(P0, Vector3d.Zero, m_PartDia, out m_CoreCurves, out double V1);
-                    m_SubLat = ParProfiCD(m_TrunkSet, m_CoreCurves, m_PartDia, out m_CoreCurves, out m_vol);
+                    m_TrunkSet = ParTraceCD(P0, Vector3d.Zero, m_STradi, out m_CoreCurves, out double V1);
+                    m_SubLat = ParProfiCD(m_TrunkSet, m_CoreCurves, m_STradi, out m_CoreCurves, out m_vol);
 
                     if (m_TrunkSet != null && m_SubLat != null)
                     {
@@ -174,7 +209,7 @@ namespace Genlattice
 
             }
 
-            m_CoreCurves = GLFunctions.UnitcellMaker(m_CoreCurves);
+            
         }
 
 
@@ -193,8 +228,8 @@ namespace Genlattice
             m_StrutsGraph = new List<List<Brep>>();
             
             m_PrunedST = new List<Brep>();
-            m_PartDia /= 2;
-            path = "D://LatticeStructure//TracedPoints.csv";
+            m_STradi *= 2;
+            path = "D://LatticeStructure//Traindata.csv";
 
             m_edgeSize = 1;
             m_Tau2 = 45;
@@ -496,7 +531,7 @@ namespace Genlattice
         /// <param name="FirstTrace"></param>
         /// <param name="CoreCurves"></param>
         /// <returns></returns>
-        List<Brep[]> ParTrace(Point3d P0, Vector3d V0, double m_PartDia, bool FirstTrace, out List<NurbsCurve> CoreCurves)
+        List<Brep[]> ParTrace(Point3d P0, Vector3d V0, double m_STradi, bool FirstTrace, out List<NurbsCurve> CoreCurves)
         {
             List<Brep[]> S = new List<Brep[]>();
             //List<Point3d> P = new List<Point3d>();
@@ -632,7 +667,7 @@ namespace Genlattice
                 AA.Domain = dm;
                 Curves.Add(AA);
 
-                S.Add(Brep.CreatePipe(AA, m_PartDia, true, PipeCapMode.Round, true, tolarance, angletol));
+                S.Add(Brep.CreatePipe(AA, m_STradi, true, PipeCapMode.Round, true, tolarance, angletol));
 
                
 
@@ -701,7 +736,7 @@ namespace Genlattice
             //    Curves.Add(AA);
 
 
-            //    S.Add(Brep.CreatePipe(AA, m_PartDia, true, PipeCapMode.Round, true, tolarance, angletol));
+            //    S.Add(Brep.CreatePipe(AA, m_STradi, true, PipeCapMode.Round, true, tolarance, angletol));
 
 
             //    if (P[i].Z == 1 || P[i].Z < 0.00000001)
@@ -793,7 +828,7 @@ namespace Genlattice
             int ni1, ni2;
             bool ReqVolume = false;
 
-            SubLat = TraceTWBounds(CoreCurves, m_PartDia, out Solved);
+            SubLat = TraceTWBounds(CoreCurves, m_STradi, out Solved);
             if (Solved == false)
             {
                 OcVolume = 0;
@@ -956,7 +991,7 @@ namespace Genlattice
             int ni1;
             bool ReqVolume = false;
 
-            SubLat = TraceTWBoundsCD(TrunkST, CoreCurves, m_PartDia, out List<NurbsCurve> CoreCurves1, out double VOLL);
+            SubLat = TraceTWBoundsCD(TrunkST, CoreCurves, m_STradi, out List<NurbsCurve> CoreCurves1, out double VOLL);
             Vol1 = GetBrepListVol(CoreCurves1);
 
             if (VOLL > m_Tau5)
@@ -1235,7 +1270,7 @@ namespace Genlattice
                             Line LL = new Line(PP0, PP1);
                             var cc = LL.ToNurbsCurve();
                             cc.Domain = dm;
-                            var TSb1 = Brep.CreatePipe(cc, m_PartDia, true, PipeCapMode.Round, true, tolarance, angletol);
+                            var TSb1 = Brep.CreatePipe(cc, m_STradi, true, PipeCapMode.Round, true, tolarance, angletol);
 
                             CoreCurves.Add(cc);
                             S.Add(TSb1);
@@ -1891,7 +1926,7 @@ namespace Genlattice
 
             for (int i = 0; i < Corcurves.Count; i++)
             {
-                double Vs = Corcurves[i].GetLength() * (Math.Pow(m_PartDia, 2)) * Math.PI;
+                double Vs = Corcurves[i].GetLength() * (Math.Pow(m_STradi, 2)) * Math.PI;
                 Vol = Vol + Vs;
             }
 
@@ -2079,7 +2114,7 @@ namespace Genlattice
                 }
 
                 Vdir = RandVecCone(OVEcone);
-                if (Vdir.Length < 3 * m_PartDia)
+                if (Vdir.Length < 3 * m_STradi)
                 {
                     continue;
                 }
