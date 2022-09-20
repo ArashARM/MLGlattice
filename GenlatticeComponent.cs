@@ -35,7 +35,7 @@ namespace Genlattice
         public GenlatticeComponent()
           : base("Genlattice", "Nickname",
               "Description",
-              "MLG-Lattice", "2")
+              "MLG-Lattice", "MLDATA")
         {
         }
 
@@ -67,7 +67,6 @@ namespace Genlattice
         Random random;
         private static DateTime m_PreviousTime;
         string path;
-        string path1;
         Vector3d m_loadVecor;
         List<Brep> m_Voxels;
         
@@ -94,9 +93,10 @@ namespace Genlattice
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
+            pManager.AddNumberParameter("ComTime", "ComTime", "ComTime", GH_ParamAccess.item);
             pManager.AddCurveParameter("listedCurves", "listedCurves", "listedCurves", GH_ParamAccess.list);
-            pManager.AddBrepParameter("Voxels", "Voxels", "Voxels", GH_ParamAccess.list);
-            pManager.AddNumberParameter("VoxIndex", "VoxIndex", "VoxIndex", GH_ParamAccess.item);
+            //pManager.AddBrepParameter("Voxels", "Voxels", "Voxels", GH_ParamAccess.list);
+            //pManager.AddNumberParameter("VoxIndex", "VoxIndex", "VoxIndex", GH_ParamAccess.item);
             //pManager.AddNumberParameter("Fmax", "Fmax", "Fmax", GH_ParamAccess.item);
             //pManager.AddNumberParameter("F/Vmax", "F/Vmax", "F/Vmax", GH_ParamAccess.item);
             //pManager.AddNumberParameter("MaxSt", "MaxSt", "MaxSt", GH_ParamAccess.item);
@@ -119,45 +119,74 @@ namespace Genlattice
             DA.GetData(2, ref m_Tau4);
             DA.GetData(3, ref m_VoxNumonEdge);
 
-            if (File.Exists(path))
-            {
-                System.IO.File.Delete(path);
-            }
-
             Init();
+            m_PreviousTime = DateTime.Now;
 
-            System.IO.File.AppendAllText(path, " Model#" + ","  );
-            for (int i = 0; i < Math.Pow(m_VoxNumonEdge,3); i++)
-            {
-                System.IO.File.AppendAllText(path, "X" + i.ToString() + ",");
-                
-            }
+            //if (File.Exists(path))
+            //{
+            //    System.IO.File.Delete(path);
+            //}
 
-            System.IO.File.AppendAllText(path, "Y" + 0.ToString() + ",");
-            System.IO.File.AppendAllText(path, "Y" + 1.ToString() + "\n");
+            //System.IO.File.AppendAllText(path, " Model#" + ",");
+            //for (int i = 0; i < Math.Pow(m_VoxNumonEdge, 3); i++)
+            //{
+            //    System.IO.File.AppendAllText(path, "X" + i.ToString() + ",");
 
-            Genlattice();
+            //}
+
+            //System.IO.File.AppendAllText(path, "Y" + 0.ToString() + ",");
+            //System.IO.File.AppendAllText(path, "Y" + 1.ToString() + "\n");
+
             m_Voxels = GLFunctions.VoxelizeUnitcell(m_edgeSize, m_VoxNumonEdge);
-            m_solidVoxels = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_STradi/2, m_Voxels,out List<double> VoxIndes );
-            Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(m_CoreCurves, new Vector3d(0, 0, -0.001), 0.02, 0.04);
 
-            for (int j = 0; j < VoxIndes.Count; j++)
+            for (int i0 = 20; i0 < 600; i0++)
             {
-                if (j==0)
-                    System.IO.File.AppendAllText(path, " Model"+j.ToString() + ",");
+                m_CoreCurves = new List<NurbsCurve>();
+                Genlattice();
+                bool ValidModel = true;
+                for (int ii = 0; ii < m_CoreCurves.Count; ii++)
+                {
+                    if(m_CoreCurves[ii].GetLength() < 0.01)
+                    {
+                        i0--;
+                        ValidModel = false;
+                        break;
+                    }    
+                }
+                if (!ValidModel)
+                    continue;
 
-                System.IO.File.AppendAllText(path, VoxIndes[j].ToString() + ",");
+                m_solidVoxels = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_STradi / 2, m_Voxels, out List<double> VoxIndes);
+                Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(m_CoreCurves, new Vector3d(0, 0, -0.001), 0.008, 0.012);
+
+                if (FEMresults.Item1 == 0 && FEMresults.Item2 == 0 && FEMresults.Item3 == 0)
+                {
+                    i0--;
+                    continue;
+                }
+                for (int j = 0; j < VoxIndes.Count; j++)
+                {
+                    if (j == 0)
+                        System.IO.File.AppendAllText(path, " Model" + i0.ToString() + ",");
+
+                    System.IO.File.AppendAllText(path, VoxIndes[j].ToString() + ",");
+                }
+
+                System.IO.File.AppendAllText(path, FEMresults.Item1.ToString() + ",");
+                System.IO.File.AppendAllText(path, FEMresults.Item3.ToString() + "\n");
+
             }
+           
 
-            System.IO.File.AppendAllText(path, FEMresults.Item1.ToString() + ",");
-            System.IO.File.AppendAllText(path, FEMresults.Item3.ToString() + "\n");
+            double TimeCom = (DateTime.Now - m_PreviousTime).Minutes;
 
 
-            m_CoreCurves = GLFunctions.UnitcellMakerNoscale(m_CoreCurves);
+            DA.SetData(0, TimeCom);
+            //m_CoreCurves = GLFunctions.UnitcellMakerNoscale(m_CoreCurves);
 
-            DA.SetDataList(0, m_CoreCurves);
-            DA.SetDataList(1, m_solidVoxels);
-            DA.SetDataList(2, VoxIndes);
+            //DA.SetDataList(1, m_CoreCurves);
+            //DA.SetDataList(1, m_solidVoxels);
+            //DA.SetDataList(2, VoxIndes);
 
             //DA.SetData(2, FEMresults.Item1);
             //DA.SetData(3, FEMresults.Item2);
@@ -238,7 +267,16 @@ namespace Genlattice
             m_alpha = (90 - m_Tau2) * (Math.PI / 180);
             m_theta = (180 - m_Tau3) * (Math.PI / 180);
 
+            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt"))
+            {
+                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
+            }
 
+            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt"))
+            {
+                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt");
+            }
+            
 
 
             dm = new Interval(0, 1);
@@ -541,10 +579,6 @@ namespace Genlattice
             //List<Line> C = new List<Line>();
             Line[] C = new Line[100];
             List<NurbsCurve> Curves = new List<NurbsCurve>();
-            Vector3d Test1 = new Vector3d();
-            Point3d Test = new Point3d();
-            Point3d Test11 = new Point3d();
-
 
 
             // Randomizing P0 points 
@@ -857,7 +891,7 @@ namespace Genlattice
                 return null;
             }
 
-            if (Vol1 < m_Tau5 && Vol1 > m_Tau4)
+            if (Vol1 <= m_Tau5 && Vol1 >= m_Tau4)
             {
 
                 OcVolume = Vol1;
@@ -1168,7 +1202,7 @@ namespace Genlattice
                     counter++;
                     if (counter > 500)
                     {
-                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, counter.ToString() + "  ModelL/Models failed  !!!!!!");
+                        //AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, counter.ToString() + "  ModelL/Models failed  !!!!!!");
                         Solved = false;
                         break;
 
@@ -1258,72 +1292,72 @@ namespace Genlattice
 
                         if (Math.Round(C0.PointAtEnd.Z,1)> 0 && C0.PointAtEnd.Z < 1)
                         {
-                            Point3d PP0 = C0.PointAtEnd;
-                            Point3d PP1 = new Point3d();
-                            double ANGG = Vector3d.VectorAngle(V0, Vector3d.ZAxis);
-                            if (ANGG < Math.PI / 2)
-                                PP1 = new Point3d(C0.PointAtEnd.X, C0.PointAtEnd.Y, 1);
-                            else
-                            {
-                                PP1 = new Point3d(C0.PointAtEnd.X, C0.PointAtEnd.Y, 0);
-                            }
-                            Line LL = new Line(PP0, PP1);
-                            var cc = LL.ToNurbsCurve();
-                            cc.Domain = dm;
-                            var TSb1 = Brep.CreatePipe(cc, m_STradi, true, PipeCapMode.Round, true, tolarance, angletol);
+                            //Point3d PP0 = C0.PointAtEnd;
+                            //Point3d PP1 = new Point3d();
+                            //double ANGG = Vector3d.VectorAngle(V0, Vector3d.ZAxis);
+                            //if (ANGG < Math.PI / 2)
+                            //    PP1 = new Point3d(C0.PointAtEnd.X, C0.PointAtEnd.Y, 1);
+                            //else
+                            //{
+                            //    PP1 = new Point3d(C0.PointAtEnd.X, C0.PointAtEnd.Y, 0);
+                            //}
+                            //Line LL = new Line(PP0, PP1);
+                            //var cc = LL.ToNurbsCurve();
+                            //cc.Domain = dm;
+                            //var TSb1 = Brep.CreatePipe(cc, m_STradi, true, PipeCapMode.Round, true, tolarance, angletol);
 
-                            CoreCurves.Add(cc);
-                            S.Add(TSb1);
+                            //CoreCurves.Add(cc);
+                            //S.Add(TSb1);
 
 
                             //******************************StartOFDEFAULT
-                            //bool NotIntSecc = true;
-                            //int ContM = 0;
-                            //while(NotIntSecc)
-                            //{
-                            //    ContM++;
-                            //    if (ContM > 50)
-                            //    {
-                            //        continue;
+                            bool NotIntSecc = true;
+                            int ContM = 0;
+                            while (NotIntSecc)
+                            {
+                                ContM++;
+                                if (ContM > 50)
+                                {
+                                    continue;
 
-                            //    }
+                                }
 
-                            //    TSb = ParTrace(C0.PointAtEnd, V0, dia, true, out NewCoreCurves);
+                                TSb = ParTrace(C0.PointAtEnd, V0, dia, true, out NewCoreCurves);
 
-                            //    for (int k1 = 0; k1 < CoreCurves.Count; k1++)
-                            //    {
-                            //        for (int k2 = 0; k2 < NewCoreCurves.Count; k2++)
-                            //        {
-                            //            var a1 = NewCoreCurves[k2].ClosestPoints(CoreCurves[k1], out Point3d Pti1, out Point3d Pti2);
-                            //            Point3d PP0 = NewCoreCurves[k2].PointAtLength(dia);
+                                for (int k1 = 0; k1 < CoreCurves.Count; k1++)
+                                {
+                                    for (int k2 = 0; k2 < NewCoreCurves.Count; k2++)
+                                    {
+                                        var a1 = NewCoreCurves[k2].ClosestPoints(CoreCurves[k1], out Point3d Pti1, out Point3d Pti2);
+                                        Point3d PP0 = NewCoreCurves[k2].PointAtLength(dia);
 
-                            //            if (PP0.DistanceTo(NewCoreCurves[k2].PointAtStart) < Pti1.DistanceTo(NewCoreCurves[k2].PointAtStart) && Pti1.DistanceTo(Pti2) < dia + dia / 2)
-                            //            {
-                            //                Selfintersect = true;
-                            //                break;
-                            //            }
-                            //        }
+                                        if (PP0.DistanceTo(NewCoreCurves[k2].PointAtStart) < Pti1.DistanceTo(NewCoreCurves[k2].PointAtStart) && Pti1.DistanceTo(Pti2) < dia + dia / 2)
+                                        {
+                                            Selfintersect = true;
+                                            break;
+                                        }
+                                    }
 
-                            //        if (Selfintersect)
-                            //            break;
+                                    if (Selfintersect)
+                                        break;
 
-                            //    }
+                                }
 
-                            //    if (Selfintersect)
-                            //    {
-                            //        continue;
-                            //    }
+                                if (Selfintersect)
+                                {
+                                    continue;
+                                }
 
-                            //    NotIntSecc = false;
+                                NotIntSecc = false;
 
-                            //}
-
-
-                            //CoreCurves.AddRange(NewCoreCurves);
+                            }
 
 
-                            //S.AddRange(TSb);
-                            //******************************EndOf default
+                            CoreCurves.AddRange(NewCoreCurves);
+
+
+                            S.AddRange(TSb);
+                            ///******************************EndOf default
 
                         }
 

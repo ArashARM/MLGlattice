@@ -92,7 +92,7 @@ namespace MLGlattice
                     var testCube = Voxels[j];
                     Brep[] VVAD = new Brep[1];
                     VVAD[0] = testCube;
-                    var A = GlatticeModel[i].ClosestPoints(VVAD, out Point3d CurvePT, out Point3d Pointonbox,out int Gem, 0.00001);
+                    var A = GlatticeModel[i].ClosestPoints(VVAD, out Point3d CurvePT, out Point3d Pointonbox,out int Gem, 0.0000001);
 
                     if (A == true)
                         SolidVoxels.Add(testCube);
@@ -361,11 +361,53 @@ namespace MLGlattice
            
             List<NurbsCurve> m_CCurvs = new List<NurbsCurve>();
             List<Point3d> m_Gpts = new List<Point3d>();
+            for (int i = 0; i < CRVS.Count; i++)
+            {
+                Point3d P00 = CRVS[i].PointAtStart;
+                Point3d P11 = CRVS[i].PointAtEnd;
 
-            m_CCurvs = GraphCurve(InputCVS, out m_Gpts);
+                if (P11.Z < P00.Z)
+                {
+                    CRVS[i].Reverse();
+                    CRVS[i].Domain = new Interval(0, 1);
+                }
+                    
+            }
+
+            for (int i = 0; i < CRVS.Count; i++)
+            {
+                for (int j = 0; j < CRVS.Count; j++)
+                {
+                    if (i == j)
+                        continue;
+
+                    
+                    if (CRVS[i].PointAtEnd.DistanceTo(CRVS[j].PointAtStart)<0.00001 && CRVS[i].TangentAtEnd == CRVS[j].TangentAtStart)
+                    {
+                        Line C1 = new Line(CRVS[i].PointAtStart, CRVS[j].PointAtEnd);
+                        var CC = C1.ToNurbsCurve();
+                        CC.Domain = new Interval(0, 1);
+
+                        CRVS.RemoveAt(i);
+                        if(i>j)
+                            CRVS.RemoveAt(j);
+                        if(i<j)
+                            CRVS.RemoveAt(j-1);
+                        CRVS.Add(CC);
+                        i = 0;
+                        break;
+                    }
+
+                }
+            }
+
+            m_CCurvs = GraphCurve(CRVS, out m_Gpts);
             m_CCurvs = LastCRVS(m_CCurvs);
 
 
+            
+
+ 
             string Pycode = "C://Users//Arash//Desktop//MLGlattice//bin//" + Modname + "Code.py";
             System.IO.File.Delete(Pycode);
        
@@ -411,7 +453,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].sketches['__profile__']\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.DatumCsysByDefault(CARTESIAN)\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name='Part-1-1',part = mdb.models['Model-1'].parts['Part-1'])\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.translate(instanceList=('Part-1-1', ),vector = (-0.05,-0.05,-0.05))\n");
+            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.translate(instanceList=('Part-1-1', ),vector = (-0.5,-0.5,-0.5))\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name='Part-2-1', part = mdb.models['Model-1'].parts['Part-2'])\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.InstanceFromBooleanCut(cuttingInstances=(mdb.models['Model-1'].rootAssembly.instances['Part-2-1'], ), instanceToBeCut = mdb.models['Model-1'].rootAssembly.instances['Part-1-1'], name = 'OutBox', originalInstances = DELETE)\n");
             System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].rootAssembly.features['OutBox-1']\n");
@@ -419,6 +461,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].parts['Part-2']\n");
 
 
+            System.IO.File.AppendAllText(Pycode, "try:\n");
 
             List<Point3d> PPs = new List<Point3d>();
             for (int i = 0; i < m_CCurvs.Count; i++)
@@ -476,58 +519,60 @@ namespace MLGlattice
 
                 }
 
+                
+
                 if (!StartExsited)
                 {
                     PPs.Add(Pstart);
 
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].ConstructionLine(point1=(0.0,- 0.5), point2 = (0.0, 0.5))\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].FixedConstraint(entity= mdb.models['Model-1'].sketches['__profile__'].geometry[2])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = (0.0, -" + Spharedia.ToString("0.000") + "))\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = ( 0.0, -" + Spharedia.ToString("0.000") + "))\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].VerticalConstraint(addUndoState = False, entity = mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].PerpendicularConstraint( addUndoState = False, entity1 = mdb.models['Model-1'].sketches['__profile__'].geometry[3], entity2 =mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].Part(dimensionality=THREE_D, name='SphereStart" + (i).ToString("0") + "', type=DEFORMABLE_BODY)\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['SphereStart" + (i).ToString("0") + "'].BaseSolidRevolve(angle=360.0,  flipRevolveDirection = OFF, sketch = mdb.models['Model-1'].sketches['__profile__'])\n");
-                    System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].sketches['__profile__']\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.DatumCsysByDefault(CARTESIAN)\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent = ON, name = 'SphereStart" + (i).ToString("0") + "',part = mdb.models['Model-1'].parts['SphereStart" + (i).ToString("0") + "'])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.translate(instanceList = ('SphereStart" + (i).ToString("0") + "', ), vector = (" + Pstart.X.ToString("0.000") + ", " + Pstart.Y.ToString("0.000") + ", " + Pstart.Z.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ConstructionLine(point1=(0.0,- 0.5), point2 = (0.0, 0.5))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].FixedConstraint(entity= mdb.models['Model-1'].sketches['__profile__'].geometry[2])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = (0.0, -" + Spharedia.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = ( 0.0, -" + Spharedia.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].VerticalConstraint(addUndoState = False, entity = mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].PerpendicularConstraint( addUndoState = False, entity1 = mdb.models['Model-1'].sketches['__profile__'].geometry[3], entity2 =mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].Part(dimensionality=THREE_D, name='SphereStart" + (i).ToString("0") + "', type=DEFORMABLE_BODY)\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['SphereStart" + (i).ToString("0") + "'].BaseSolidRevolve(angle=360.0,  flipRevolveDirection = OFF, sketch = mdb.models['Model-1'].sketches['__profile__'])\n");
+                    System.IO.File.AppendAllText(Pycode, " del mdb.models['Model-1'].sketches['__profile__']\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.DatumCsysByDefault(CARTESIAN)\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.Instance(dependent = ON, name = 'SphereStart" + (i).ToString("0") + "',part = mdb.models['Model-1'].parts['SphereStart" + (i).ToString("0") + "'])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.translate(instanceList = ('SphereStart" + (i).ToString("0") + "', ), vector = (" + Pstart.X.ToString("0.000") + ", " + Pstart.Y.ToString("0.000") + ", " + Pstart.Z.ToString("0.000") + "))\n");
 
                 }
 
 
                 System.IO.File.AppendAllText(Pycode, "# Pipe" + i.ToString("0.0000") + " \n");
 
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].CircleByCenterPerimeter(center = ( 0.0, 0.0), point1 = (0.0," + partdia.ToString("0.0000") + "))\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].Part(dimensionality = THREE_D, name = 'Pipe-GEB" + (i + 1).ToString("0") + "', type = DEFORMABLE_BODY)\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].BaseSolidExtrude(depth = " + Length.ToString("0.0000") + ", sketch = mdb.models['Model-1'].sketches['__profile__'])\n");
-                System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].sketches['__profile__']\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].Set(cells = mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].cells.getSequenceFromMask(('[#1 ]',), ), name = 'Set-1')\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].SectionAssignment(offset = 0.0, offsetField = '', offsetType = MIDDLE_SURFACE, region = mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].sets['Set-1'], sectionName ='inconelSECTION', thicknessAssignment = FROM_SECTION)\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent = ON, name = 'Pipe-GEB-" + (i + 1).ToString("0") + "', part = mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'])\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.rotate(angle = -" + Xangke.ToString("0.0000") + ", axisDirection = (" + RotationAxis.X.ToString("0.0000") + ", " + RotationAxis.Y.ToString("0.0000") + "," + RotationAxis.Z.ToString("0.0000") + "), axisPoint = (0.0, 0.0, 0.0), instanceList = ('Pipe-GEB-" + (i + 1).ToString("0") + "', ))\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].CircleByCenterPerimeter(center = ( 0.0, 0.0), point1 = (0.0," + partdia.ToString("0.0000") + "))\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].Part(dimensionality = THREE_D, name = 'Pipe-GEB" + (i + 1).ToString("0") + "', type = DEFORMABLE_BODY)\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].BaseSolidExtrude(depth = " + Length.ToString("0.0000") + ", sketch = mdb.models['Model-1'].sketches['__profile__'])\n");
+                System.IO.File.AppendAllText(Pycode, " del mdb.models['Model-1'].sketches['__profile__']\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].Set(cells = mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].cells.getSequenceFromMask(('[#1 ]',), ), name = 'Set-1')\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].SectionAssignment(offset = 0.0, offsetField = '', offsetType = MIDDLE_SURFACE, region = mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].sets['Set-1'], sectionName ='inconelSECTION', thicknessAssignment = FROM_SECTION)\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.Instance(dependent = ON, name = 'Pipe-GEB-" + (i + 1).ToString("0") + "', part = mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'])\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.rotate(angle = -" + Xangke.ToString("0.0000") + ", axisDirection = (" + RotationAxis.X.ToString("0.0000") + ", " + RotationAxis.Y.ToString("0.0000") + "," + RotationAxis.Z.ToString("0.0000") + "), axisPoint = (0.0, 0.0, 0.0), instanceList = ('Pipe-GEB-" + (i + 1).ToString("0") + "', ))\n");
                 //System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.rotate(angle = -" + Yangke.ToString("0.0000") + ", axisDirection = (0.0, 10.0, 0.0), axisPoint = (0.0, 0.0, 0.0), instanceList = ('Pipe-GEB-" + (i + 1).ToString("0") + "', ))\n");
-                System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.translate(instanceList = ('Pipe-GEB-" + (i + 1).ToString("0") + "', ), vector = (" + TrasPoints.X.ToString("0.0000") + "," + TrasPoints.Y.ToString("0.0000") + ", " + TrasPoints.Z.ToString("0.0000") + "))\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.translate(instanceList = ('Pipe-GEB-" + (i + 1).ToString("0") + "', ), vector = (" + TrasPoints.X.ToString("0.0000") + "," + TrasPoints.Y.ToString("0.0000") + ", " + TrasPoints.Z.ToString("0.0000") + "))\n");
 
                 if (!EndExsited)
                 {
                     PPs.Add(Pend);
 
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].ConstructionLine(point1=(0.0,- 0.5), point2 = (0.0, 0.5))\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].FixedConstraint(entity= mdb.models['Model-1'].sketches['__profile__'].geometry[2])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = (0.0, -" + Spharedia.ToString("0.000") + "))\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = ( 0.0, -" + Spharedia.ToString("0.000") + "))\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].VerticalConstraint(addUndoState = False, entity = mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].sketches['__profile__'].PerpendicularConstraint( addUndoState = False, entity1 = mdb.models['Model-1'].sketches['__profile__'].geometry[3], entity2 =mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].Part(dimensionality=THREE_D, name='SphereEnd" + (i).ToString("0") + "', type=DEFORMABLE_BODY)\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['SphereEnd" + (i).ToString("0") + "'].BaseSolidRevolve(angle=360.0,  flipRevolveDirection = OFF, sketch = mdb.models['Model-1'].sketches['__profile__'])\n");
-                    System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].sketches['__profile__']\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.DatumCsysByDefault(CARTESIAN)\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent = ON, name = 'SphereEnd" + (i).ToString("0") + "',part = mdb.models['Model-1'].parts['SphereEnd" + (i).ToString("0") + "'])\n");
-                    System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.translate(instanceList = ('SphereEnd" + (i).ToString("0") + "', ), vector = (" + Pend.X.ToString("0.000") + ", " + Pend.Y.ToString("0.000") + ", " + Pend.Z.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ConstructionLine(point1=(0.0,- 0.5), point2 = (0.0, 0.5))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].FixedConstraint(entity= mdb.models['Model-1'].sketches['__profile__'].geometry[2])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = (0.0, -" + Spharedia.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = ( 0.0, -" + Spharedia.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].VerticalConstraint(addUndoState = False, entity = mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].PerpendicularConstraint( addUndoState = False, entity1 = mdb.models['Model-1'].sketches['__profile__'].geometry[3], entity2 =mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].Part(dimensionality=THREE_D, name='SphereEnd" + (i).ToString("0") + "', type=DEFORMABLE_BODY)\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['SphereEnd" + (i).ToString("0") + "'].BaseSolidRevolve(angle=360.0,  flipRevolveDirection = OFF, sketch = mdb.models['Model-1'].sketches['__profile__'])\n");
+                    System.IO.File.AppendAllText(Pycode, " del mdb.models['Model-1'].sketches['__profile__']\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.DatumCsysByDefault(CARTESIAN)\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.Instance(dependent = ON, name = 'SphereEnd" + (i).ToString("0") + "',part = mdb.models['Model-1'].parts['SphereEnd" + (i).ToString("0") + "'])\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.translate(instanceList = ('SphereEnd" + (i).ToString("0") + "', ), vector = (" + Pend.X.ToString("0.000") + ", " + Pend.Y.ToString("0.000") + ", " + Pend.Z.ToString("0.000") + "))\n");
 
                 }
             }
@@ -535,15 +580,24 @@ namespace MLGlattice
 
 
             //uniting struts and sphere to one model
-            System.IO.File.AppendAllText(Pycode, "a = mdb.models['Model-1'].rootAssembly\n");
-            System.IO.File.AppendAllText(Pycode, "SingleInstances_List = mdb.models['Model-1'].rootAssembly.instances.keys()\n");
-            System.IO.File.AppendAllText(Pycode, "a.InstanceFromBooleanMerge(name='SingleUnit', instances=([a.instances[SingleInstances_List[i]] for i in range(len(SingleInstances_List))] ), domain = GEOMETRY, originalInstances = DELETE)\n");
+            
+            System.IO.File.AppendAllText(Pycode, " a = mdb.models['Model-1'].rootAssembly\n");
+            System.IO.File.AppendAllText(Pycode, " SingleInstances_List = mdb.models['Model-1'].rootAssembly.instances.keys()\n");
+            System.IO.File.AppendAllText(Pycode, " a.InstanceFromBooleanMerge(name='SingleUnit', instances=([a.instances[SingleInstances_List[i]] for i in range(len(SingleInstances_List))] ), domain = GEOMETRY, originalInstances = DELETE)\n");
 
             //Cutting Model lattice edges with outer box
 
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name='OutBox-1', part = mdb.models['Model-1'].parts['OutBox'])\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.InstanceFromBooleanCut(cuttingInstances=(mdb.models['Model-1'].rootAssembly.instances['OutBox-1'], ), instanceToBeCut = mdb.models['Model-1'].rootAssembly.instances['SingleUnit-1'], name ='CuttedUnitCell', originalInstances = DELETE)\n");
-            System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].rootAssembly.features['CuttedUnitCell-1']\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name='OutBox-1', part = mdb.models['Model-1'].parts['OutBox'])\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.InstanceFromBooleanCut(cuttingInstances=(mdb.models['Model-1'].rootAssembly.instances['OutBox-1'], ), instanceToBeCut = mdb.models['Model-1'].rootAssembly.instances['SingleUnit-1'], name ='CuttedUnitCell', originalInstances = DELETE)\n");
+            System.IO.File.AppendAllText(Pycode, " del mdb.models['Model-1'].rootAssembly.features['CuttedUnitCell-1']\n");
+
+            //if cannt booalena
+            System.IO.File.AppendAllText(Pycode, "except:\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f' %(0,0,0))\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+            System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+
 
             //defining walls 
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=200.0)\n");
@@ -572,12 +626,20 @@ namespace MLGlattice
 
             //Merging outerbox with lattice structure and define material for it
 
-            System.IO.File.AppendAllText(Pycode, "a = mdb.models['Model-1'].rootAssembly\n");
-            System.IO.File.AppendAllText(Pycode, "SingleInstances_List = mdb.models['Model-1'].rootAssembly.instances.keys()\n");
-            System.IO.File.AppendAllText(Pycode, "a.InstanceFromBooleanMerge(name='LsStruc', instances=([a.instances[SingleInstances_List[i]] for i in range(len(SingleInstances_List))] ), domain = GEOMETRY, originalInstances = SUPPRESS)\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['LsStruc'].Set(cells=mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), name = 'Set-1')\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['LsStruc'].SectionAssignment(offset=0.0, offsetField = '', offsetType = MIDDLE_SURFACE, region =mdb.models['Model-1'].parts['LsStruc'].sets['Set-1'], sectionName ='inconelSECTION', thicknessAssignment = FROM_SECTION)\n");
+            System.IO.File.AppendAllText(Pycode, "try:\n");
+            System.IO.File.AppendAllText(Pycode, " a = mdb.models['Model-1'].rootAssembly\n");
+            System.IO.File.AppendAllText(Pycode, " SingleInstances_List = mdb.models['Model-1'].rootAssembly.instances.keys()\n");
+            System.IO.File.AppendAllText(Pycode, " a.InstanceFromBooleanMerge(name='LsStruc', instances=([a.instances[SingleInstances_List[i]] for i in range(len(SingleInstances_List))] ), domain = GEOMETRY, originalInstances = SUPPRESS)\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].Set(cells=mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), name = 'Set-1')\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].SectionAssignment(offset=0.0, offsetField = '', offsetType = MIDDLE_SURFACE, region =mdb.models['Model-1'].parts['LsStruc'].sets['Set-1'], sectionName ='inconelSECTION', thicknessAssignment = FROM_SECTION)\n");
 
+            //if cannt mesh
+
+            System.IO.File.AppendAllText(Pycode, "except:\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f' %(0,0,0))\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+            System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
 
             ////RigidPlates
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=200.0)\n");
@@ -586,7 +648,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Plate'].BaseSolidExtrude(depth=0.1, sketch=mdb.models['Model-1'].sketches['__profile__'])\n");
             System.IO.File.AppendAllText(Pycode, "del mdb.models['Model-1'].sketches['__profile__']\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Plate'].RemoveCells(cellList=mdb.models['Model-1'].parts['Plate'].cells.getSequenceFromMask(mask = ('[#1 ]', ), ))\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Plate'].ReferencePoint(point=(1.5, 1.5, 0.1))\n");
+            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Plate'].ReferencePoint(point=(0.5, 0.5, 0.1))\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name='Plate-1', part=mdb.models['Model-1'].parts['Plate'])\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.translate(instanceList=('Plate-1', ), vector = (0.0, 0.0, -0.1005))\n");
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.Instance(dependent=ON, name='Plate-2', part=mdb.models['Model-1'].parts['Plate'])\n");
@@ -617,13 +679,23 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].DisplacementBC(amplitude=UNSET, createStepName='Step-1', distributionType = UNIFORM, fieldName = '', fixed= OFF, localCsys = None, name ='BC-2', region = mdb.models['Model-1'].rootAssembly.sets['Set-7'], u1 = " + DisVec.X.ToString() + ", u2 = " + DisVec.Y.ToString() + ", u3 = " + DisVec.Z.ToString() + ", ur1 = 0.0, ur2 = 0.0, ur3 = 0.0)\n");
 
             //meshing
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['LsStruc'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.04)\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['LsStruc'].setMeshControls(elemShape=TET, regions =mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), technique = FREE)\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['LsStruc'].setElementType(elemTypes=(ElemType(elemCode = C3D20R, elemLibrary = STANDARD), ElemType(elemCode = C3D15,elemLibrary = STANDARD), ElemType(elemCode = C3D10, elemLibrary = STANDARD)), regions = (mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), ))\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['LsStruc'].generateMesh()\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Plate'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.5)\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].parts['Plate'].generateMesh()\n");
-            System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].rootAssembly.regenerate()\n");
+            System.IO.File.AppendAllText(Pycode, "try:\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.02)\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].setMeshControls(elemShape=TET, regions =mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), technique = FREE)\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].setElementType(elemTypes=(ElemType(elemCode = C3D20R, elemLibrary = STANDARD), ElemType(elemCode = C3D15,elemLibrary = STANDARD), ElemType(elemCode = C3D10, elemLibrary = STANDARD)), regions = (mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), ))\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].generateMesh()\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['Plate'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.5)\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['Plate'].generateMesh()\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].rootAssembly.regenerate()\n");
+
+            //if cannt mesh
+            System.IO.File.AppendAllText(Pycode, "except:\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f' %(0,0,0))\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+            System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+
+
 
             ////Job definition 
             System.IO.File.AppendAllText(Pycode, "mdb.Job(atTime=None, contactPrint=OFF, description='', echoPrint=OFF, explicitPrecision = SINGLE, getMemoryFromAnalysis = True, historyPrint = OFF,memory = 90, memoryUnits = PERCENTAGE, model = 'Model-1', modelPrint = OFF,multiprocessingMode = DEFAULT, name = 'TestJob', nodalOutputPrecision =SINGLE, numCpus = 1, numGPUs = 0, queue = None, resultsFormat = ODB, scratch = '',type = ANALYSIS, userSubroutine = '', waitHours = 0, waitMinutes = 0)\n");
@@ -672,7 +744,8 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "sortie.close()\n");
 
             System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
-
+            
+            //string command1 = "/C abaqus cae noGUI=" + Modname + "Code.py";
             string command = "/C abaqus cae script=" + Modname + "Code.py";
             Process.Start("cmd.exe", command);
 
@@ -680,11 +753,11 @@ namespace MLGlattice
        
             while (true)
             {
-                Thread.Sleep(5000);
+                Thread.Sleep(3000);
 
                 if (File.Exists(path))
                 {
-                    Thread.Sleep(5000);
+                    Thread.Sleep(2000);
                     //Process.GetCurrentProcess().Kill();
                     break;
                 }
@@ -695,6 +768,8 @@ namespace MLGlattice
 
             System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
             System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt");
+
+           
 
             return m_RFs;
         }
