@@ -429,6 +429,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "from odbAccess import *\n");
             System.IO.File.AppendAllText(Pycode, "import math\n");
             System.IO.File.AppendAllText(Pycode, "import odbAccess\n");
+            System.IO.File.AppendAllText(Pycode, "import time\n");
 
             System.IO.File.AppendAllText(Pycode, "sortie =open('RD.txt', 'w')\n");
 
@@ -597,6 +598,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
             System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+            System.IO.File.AppendAllText(Pycode, " sys.exit()\n");
 
 
             //defining walls 
@@ -640,6 +642,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
             System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+            System.IO.File.AppendAllText(Pycode, " sys.exit()\n");
 
             ////RigidPlates
             System.IO.File.AppendAllText(Pycode, "mdb.models['Model-1'].ConstrainedSketch(name='__profile__', sheetSize=200.0)\n");
@@ -680,7 +683,7 @@ namespace MLGlattice
 
             //meshing
             System.IO.File.AppendAllText(Pycode, "try:\n");
-            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.02)\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.035)\n");
             System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].setMeshControls(elemShape=TET, regions =mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), technique = FREE)\n");
             System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].setElementType(elemTypes=(ElemType(elemCode = C3D20R, elemLibrary = STANDARD), ElemType(elemCode = C3D15,elemLibrary = STANDARD), ElemType(elemCode = C3D10, elemLibrary = STANDARD)), regions = (mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), ))\n");
             System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].generateMesh()\n");
@@ -694,6 +697,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
             System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
+            System.IO.File.AppendAllText(Pycode, " sys.exit()\n");
 
 
 
@@ -701,6 +705,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "mdb.Job(atTime=None, contactPrint=OFF, description='', echoPrint=OFF, explicitPrecision = SINGLE, getMemoryFromAnalysis = True, historyPrint = OFF,memory = 90, memoryUnits = PERCENTAGE, model = 'Model-1', modelPrint = OFF,multiprocessingMode = DEFAULT, name = 'TestJob', nodalOutputPrecision =SINGLE, numCpus = 1, numGPUs = 0, queue = None, resultsFormat = ODB, scratch = '',type = ANALYSIS, userSubroutine = '', waitHours = 0, waitMinutes = 0)\n");
             System.IO.File.AppendAllText(Pycode, "mdb.jobs['TestJob'].submit(consistencyChecking = OFF)\n");
             System.IO.File.AppendAllText(Pycode, "mdb.jobs['TestJob'].waitForCompletion()\n");
+            System.IO.File.AppendAllText(Pycode, "time.sleep(5)\n");
 
             //Reading RF values
             System.IO.File.AppendAllText(Pycode, "A = mdb.jobs['TestJob'].status\n");
@@ -753,11 +758,11 @@ namespace MLGlattice
        
             while (true)
             {
-                Thread.Sleep(3000);
+                Thread.Sleep(4000);
 
                 if (File.Exists(path))
                 {
-                    Thread.Sleep(2000);
+                    Thread.Sleep(6000);
                     //Process.GetCurrentProcess().Kill();
                     break;
                 }
@@ -819,6 +824,52 @@ namespace MLGlattice
 
 
             return VoxInd;
+        }
+
+        public static List<NurbsCurve> SelectModelMinimizedE (List<List<NurbsCurve>> NewModels, List<List<NurbsCurve>> ExistingModels, List<Brep> Voxels)
+        {
+            int selectedInd = 0;
+            double MinE = 10^8;
+            for (int i = 0; i < NewModels.Count; i++)
+            {
+                double E = ComputeEnergy(NewModels[i], ExistingModels, Voxels);
+
+                if (E < MinE)
+                {
+                    MinE = E;
+                    selectedInd = i;
+                }    
+            }
+            var GModel = NewModels[selectedInd];
+            return GModel;
+        }
+
+        public static double ComputeEnergy(List<NurbsCurve> Crv0, List<List<NurbsCurve>> TotalCRVs, List<Brep> Voxels)
+        {
+            double E = 0;
+            for (int i = 0; i < TotalCRVs.Count; i++)
+            {
+                double D = ShapeDistance(Crv0, TotalCRVs[i], Voxels);
+                D = 1 / D;
+                E = +D;
+            }
+
+            return E;
+        }
+        public static double ShapeDistance(List<NurbsCurve> Crv0, List<NurbsCurve> Crv1, List<Brep> Voxels)
+        {
+            var solidVox0 = GLFunctions.MapGLatticeToVoxels(Crv0, 0.008, Voxels, out List<double> VoxIndex0);
+            var solidVox1 = GLFunctions.MapGLatticeToVoxels(Crv1, 0.008, Voxels, out List<double> VoxIndex1);
+
+            double SigmaD = 0;
+            for (int i = 0; i < Voxels.Count; i++)
+            {
+                double Dis = Math.Pow(VoxIndex0[i] - VoxIndex1[1],2);
+                SigmaD += Dis;
+            }
+
+            double Dif = Math.Sqrt(SigmaD);
+            return Dif;
         }
 
     }
