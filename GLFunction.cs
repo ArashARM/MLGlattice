@@ -755,11 +755,18 @@ namespace MLGlattice
             Process.Start("cmd.exe", command);
 
             string path = "C://Users//Arash//Desktop//MLGlattice//bin//Done.txt";
-       
+
+            int CNA = 0;
+
             while (true)
             {
                 Thread.Sleep(4000);
-
+                CNA++;
+                if (CNA > 150)
+                {
+                    Tuple<double, double, double> Res = new Tuple<double, double, double>(0, 0, 0);
+                    return Res;
+                }    
                 if (File.Exists(path))
                 {
                     Thread.Sleep(6000);
@@ -774,7 +781,9 @@ namespace MLGlattice
             System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
             System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt");
 
-           
+            string command1 = "/C taskkill/im cmd.exe";
+            Process.Start("cmd.exe", command1);
+             
 
             return m_RFs;
         }
@@ -826,13 +835,13 @@ namespace MLGlattice
             return VoxInd;
         }
 
-        public static List<NurbsCurve> SelectModelMinimizedE (List<List<NurbsCurve>> NewModels, List<List<NurbsCurve>> ExistingModels, List<Brep> Voxels)
+        public static List<NurbsCurve> SelectModelMinimizedE (List<List<NurbsCurve>> InputCurve,List<List<double>> NewModels, List<List<double>> ExistingModels)
         {
             int selectedInd = 0;
             double MinE = 10^8;
             for (int i = 0; i < NewModels.Count; i++)
             {
-                double E = ComputeEnergy(NewModels[i], ExistingModels, Voxels);
+                double E = ComputeEnergy(NewModels[i], ExistingModels);
 
                 if (E < MinE)
                 {
@@ -840,29 +849,29 @@ namespace MLGlattice
                     selectedInd = i;
                 }    
             }
-            var GModel = NewModels[selectedInd];
+            var GModel = InputCurve[selectedInd];
             return GModel;
         }
 
-        public static double ComputeEnergy(List<NurbsCurve> Crv0, List<List<NurbsCurve>> TotalCRVs, List<Brep> Voxels)
+        public static double ComputeEnergy(List<double> VoxIndex0, List<List<double>> ExistingVoxInds)
         {
             double E = 0;
-            for (int i = 0; i < TotalCRVs.Count; i++)
+            for (int i = 0; i < ExistingVoxInds.Count; i++)
             {
-                double D = ShapeDistance(Crv0, TotalCRVs[i], Voxels);
+                double D = ShapeDistance(VoxIndex0, ExistingVoxInds[i]);
                 D = 1 / D;
                 E = +D;
             }
 
             return E;
         }
-        public static double ShapeDistance(List<NurbsCurve> Crv0, List<NurbsCurve> Crv1, List<Brep> Voxels)
+        public static double ShapeDistance(List<double> VoxIndex0, List<double> VoxIndex1)
         {
-            var solidVox0 = GLFunctions.MapGLatticeToVoxels(Crv0, 0.008, Voxels, out List<double> VoxIndex0);
-            var solidVox1 = GLFunctions.MapGLatticeToVoxels(Crv1, 0.008, Voxels, out List<double> VoxIndex1);
+            //var solidVox0 = GLFunctions.MapGLatticeToVoxels(Crv0, 0.008, Voxels, out List<double> VoxIndex0);
+            //var solidVox1 = GLFunctions.MapGLatticeToVoxels(Crv1, 0.008, Voxels, out List<double> VoxIndex1);
 
             double SigmaD = 0;
-            for (int i = 0; i < Voxels.Count; i++)
+            for (int i = 0; i < VoxIndex1.Count; i++)
             {
                 double Dis = Math.Pow(VoxIndex0[i] - VoxIndex1[1],2);
                 SigmaD += Dis;
@@ -870,6 +879,42 @@ namespace MLGlattice
 
             double Dif = Math.Sqrt(SigmaD);
             return Dif;
+        }
+
+        public static List<List<double>> ReadTracedInfo(string path)
+        {
+            List<List<double>> tracedInfo = new List<List<double>>();
+
+            string Totalinfo = System.IO.File.ReadAllText(path);
+
+            string[] coords;
+            string[] lines = Totalinfo.Split(new string[] { "\n" }, StringSplitOptions.None);
+
+            for (int i = 1; i < lines.Length-1; i++)
+            {
+                List<double> Info = new List<double>();
+                coords = lines[i].Split(new string[] { "," }, StringSplitOptions.None);
+
+                for (int j = 1; j < coords.Length-2; j++)
+                {
+                    Info.Add(Convert.ToDouble(coords[j]));
+                }
+                tracedInfo.Add(Info);
+            }
+
+            return tracedInfo;
+        }
+
+        public static void SaveST(List<NurbsCurve> CRVS, string ModName)
+        {
+            string filesave = "D://MLModels//GLattice" + ModName + ".txt";
+            #region serializing CRVS
+            File.Delete(filesave);
+            IFormatter formatter = new BinaryFormatter();
+            Stream stream = new FileStream(filesave, FileMode.Create, FileAccess.Write);
+            formatter.Serialize(stream, CRVS);
+            stream.Close();
+            #endregion
         }
 
     }

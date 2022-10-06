@@ -113,6 +113,8 @@ namespace Genlattice
         {
 
             m_loadVecor = new Vector3d();
+            List<List<double>> GeneratedModelsIndex = new List<List<double>>();
+            int Tracedmodels = 0;
 
             DA.GetData(0, ref STorCD);
             DA.GetData(1, ref m_STradi);
@@ -124,45 +126,58 @@ namespace Genlattice
 
             if (File.Exists(path))
             {
-                System.IO.File.Delete(path);
+                GeneratedModelsIndex= GLFunctions.ReadTracedInfo(path);
+                Tracedmodels = GeneratedModelsIndex.Count;
             }
 
-            System.IO.File.AppendAllText(path, " Model#" + ",");
-            for (int i = 0; i < Math.Pow(m_VoxNumonEdge, 3); i++)
+            else
             {
-                System.IO.File.AppendAllText(path, "X" + i.ToString() + ",");
+                System.IO.File.AppendAllText(path, " Model#" + ",");
+                for (int i = 0; i < Math.Pow(m_VoxNumonEdge, 3); i++)
+                {
+                    System.IO.File.AppendAllText(path, "X" + i.ToString() + ",");
 
+                }
+
+                System.IO.File.AppendAllText(path, "Y" + 0.ToString() + ",");
+                System.IO.File.AppendAllText(path, "Y" + 1.ToString() + "\n");
             }
 
-            System.IO.File.AppendAllText(path, "Y" + 0.ToString() + ",");
-            System.IO.File.AppendAllText(path, "Y" + 1.ToString() + "\n");
 
             m_Voxels = GLFunctions.VoxelizeUnitcell(m_edgeSize, m_VoxNumonEdge);
 
-            List<List<NurbsCurve>> GeneratedModels = new List<List<NurbsCurve>>();
-            for (int i0 = 0; i0 <300; i0++)
+            
+            for (int i0 = Tracedmodels; i0 < 1000; i0++)
             {
-               
+                List<double> VoxIndex = new List<double>();
+
+                //string command1 = "/C del *.*";
+                //Process.Start("cmd.exe", command1);
+
                 m_CoreCurves = new List<NurbsCurve>();
                 bool ValidModel = true;
 
                 if (i0==0)
                 {
+                    St:
+                    m_CoreCurves = new List<NurbsCurve>();
                     Genlattice();
-                    
+                    var solidVox0 = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, 0.008, m_Voxels, out VoxIndex);
+
                     for (int ii = 0; ii < m_CoreCurves.Count; ii++)
                     {
                         if (m_CoreCurves[ii].GetLength() < 0.01)
                         {
-                            i0--;
-                            ValidModel = false;
-                            break;
+                            //i0--;
+                            //ValidModel = false;
+                            goto St;
                         }
                     }
                 }
                 else
                 {
                     List<List<NurbsCurve>> NewModels = new List<List<NurbsCurve>>();
+                    List<List<double>> NewModelsIndexs = new List<List<double>>();
                     int cntr =0;
                     for (int j = 0; j < 50; j++)
                     {
@@ -182,11 +197,14 @@ namespace Genlattice
 
                         if (!ValidModel)
                             continue;
+
+                        var solidVox0 = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, 0.008, m_Voxels, out VoxIndex);
+                        NewModelsIndexs.Add(VoxIndex);
                         var C1 = GLFunctions.DeepCopyCRV(m_CoreCurves);
                         NewModels.Add(C1);
                     }
 
-                    m_CoreCurves = GLFunctions.SelectModelMinimizedE(NewModels, GeneratedModels, m_Voxels);
+                    m_CoreCurves = GLFunctions.SelectModelMinimizedE(NewModels, NewModelsIndexs, GeneratedModelsIndex);
 
 
                 }
@@ -194,27 +212,28 @@ namespace Genlattice
 
 
                 //m_solidVoxels = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_STradi / 2, m_Voxels, out List<double> VoxIndes);
-                //Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(m_CoreCurves, new Vector3d(0, 0, -0.001), 0.008, 0.012);
+                Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(m_CoreCurves, new Vector3d(0, 0, -0.001), 0.008, 0.012);
 
-                //if (FEMresults.Item1 == 0 && FEMresults.Item2 == 0 && FEMresults.Item3 == 0)
-                //{
-                //    i0--;
-                //    continue;
-                //}
-                //for (int j = 0; j < VoxIndes.Count; j++)
-                //{
-                //    if (j == 0)
-                //        System.IO.File.AppendAllText(path, " Model" + i0.ToString() + ",");
+                if (FEMresults.Item1 == 0 && FEMresults.Item2 == 0 && FEMresults.Item3 == 0)
+                {
+                    i0--;
+                    continue;
+                }
+                for (int j = 0; j < VoxIndex.Count; j++)
+                {
+                    if (j == 0)
+                        System.IO.File.AppendAllText(path, " Model" + i0.ToString() + ",");
 
-                //    System.IO.File.AppendAllText(path, VoxIndes[j].ToString() + ",");
-                //}
+                    System.IO.File.AppendAllText(path, VoxIndex[j].ToString() + ",");
+                }
 
-                //System.IO.File.AppendAllText(path, FEMresults.Item1.ToString() + ",");
-                //System.IO.File.AppendAllText(path, FEMresults.Item3.ToString() + "\n");
+                System.IO.File.AppendAllText(path, FEMresults.Item1.ToString() + ",");
+                System.IO.File.AppendAllText(path, FEMresults.Item3.ToString() + "\n");
 
 
-                GeneratedModels.Add(m_CoreCurves);
-                DeleteFEMfiles();
+                GeneratedModelsIndex.Add(VoxIndex);
+                GLFunctions.SaveST(m_CoreCurves, i0.ToString());
+                //DeleteFEMfiles();
             }
 
             
