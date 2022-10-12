@@ -80,7 +80,7 @@ namespace MLGlattice
             return Voxels;
         }
 
-        public static List<Brep> MapGLatticeToVoxels(List<NurbsCurve> GlatticeModel, double StrutRadii,List<Brep> Voxels,out List<double> VoxelIndex)
+        public static List<Brep> MapGLatticeToVoxels(List<NurbsCurve> GlatticeModel,List<Brep> Voxels,out List<double> VoxelIndex)
         {
             List<Brep> SolidVoxels = new List<Brep>();
 
@@ -351,7 +351,7 @@ namespace MLGlattice
             return rtnvector;
         }
 
-        public static Tuple<double, double,double> UnitCellFEM(List<NurbsCurve> InputCVS, Vector3d DisVec, double partdia, double Spharedia)
+        public static Tuple<double, double,double> UnitCellFEM(List<NurbsCurve> InputCVS, Vector3d DisVec, double PartRadii, double SphareRadii)
         {
 
             List<NurbsCurve> CRVS = DeepCopyCRV(InputCVS);
@@ -529,8 +529,8 @@ namespace MLGlattice
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ConstructionLine(point1=(0.0,- 0.5), point2 = (0.0, 0.5))\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].FixedConstraint(entity= mdb.models['Model-1'].sketches['__profile__'].geometry[2])\n");
-                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = (0.0, -" + Spharedia.ToString("0.000") + "))\n");
-                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = ( 0.0, -" + Spharedia.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + SphareRadii.ToString("0.000") + "), point2 = (0.0, -" + SphareRadii.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + SphareRadii.ToString("0.000") + "), point2 = ( 0.0, -" + SphareRadii.ToString("0.000") + "))\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].VerticalConstraint(addUndoState = False, entity = mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].PerpendicularConstraint( addUndoState = False, entity1 = mdb.models['Model-1'].sketches['__profile__'].geometry[3], entity2 =mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].Part(dimensionality=THREE_D, name='SphereStart" + (i).ToString("0") + "', type=DEFORMABLE_BODY)\n");
@@ -546,7 +546,7 @@ namespace MLGlattice
                 System.IO.File.AppendAllText(Pycode, "# Pipe" + i.ToString("0.0000") + " \n");
 
                 System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
-                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].CircleByCenterPerimeter(center = ( 0.0, 0.0), point1 = (0.0," + partdia.ToString("0.0000") + "))\n");
+                System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].CircleByCenterPerimeter(center = ( 0.0, 0.0), point1 = (0.0," + PartRadii.ToString("0.0000") + "))\n");
                 System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].Part(dimensionality = THREE_D, name = 'Pipe-GEB" + (i + 1).ToString("0") + "', type = DEFORMABLE_BODY)\n");
                 System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['Pipe-GEB" + (i + 1).ToString("0") + "'].BaseSolidExtrude(depth = " + Length.ToString("0.0000") + ", sketch = mdb.models['Model-1'].sketches['__profile__'])\n");
                 System.IO.File.AppendAllText(Pycode, " del mdb.models['Model-1'].sketches['__profile__']\n");
@@ -564,8 +564,8 @@ namespace MLGlattice
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].ConstrainedSketch(name = '__profile__', sheetSize = 200.0)\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ConstructionLine(point1=(0.0,- 0.5), point2 = (0.0, 0.5))\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].FixedConstraint(entity= mdb.models['Model-1'].sketches['__profile__'].geometry[2])\n");
-                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = (0.0, -" + Spharedia.ToString("0.000") + "))\n");
-                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + Spharedia.ToString("0.000") + "), point2 = ( 0.0, -" + Spharedia.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].ArcByCenterEnds(center = (0.0, 0.0), direction = CLOCKWISE, point1 = (0.0, " + SphareRadii.ToString("0.000") + "), point2 = (0.0, -" + SphareRadii.ToString("0.000") + "))\n");
+                    System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].Line(point1 = (0.0, " + SphareRadii.ToString("0.000") + "), point2 = ( 0.0, -" + SphareRadii.ToString("0.000") + "))\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].VerticalConstraint(addUndoState = False, entity = mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].sketches['__profile__'].PerpendicularConstraint( addUndoState = False, entity1 = mdb.models['Model-1'].sketches['__profile__'].geometry[3], entity2 =mdb.models['Model-1'].sketches['__profile__'].geometry[4])\n");
                     System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].Part(dimensionality=THREE_D, name='SphereEnd" + (i).ToString("0") + "', type=DEFORMABLE_BODY)\n");
@@ -760,11 +760,14 @@ namespace MLGlattice
 
             while (true)
             {
-                Thread.Sleep(4000);
+                Thread.Sleep(2000);
                 CNA++;
-                if (CNA > 150)
+                if (CNA > 280)
                 {
                     Tuple<double, double, double> Res = new Tuple<double, double, double>(0, 0, 0);
+                    string command2 = "/C taskkill/im cmd.exe";
+                    Process.Start("cmd.exe", command2);
+                    Thread.Sleep(5000);
                     return Res;
                 }    
                 if (File.Exists(path))
@@ -775,14 +778,16 @@ namespace MLGlattice
                 }
 
             }
+            string command1 = "/C taskkill/im cmd.exe";
+            Process.Start("cmd.exe", command1);
+            Thread.Sleep(5000);
 
             Tuple<double, double,double> m_RFs = ImportFEMResults("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
 
             System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
             System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt");
 
-            string command1 = "/C taskkill/im cmd.exe";
-            Process.Start("cmd.exe", command1);
+
              
 
             return m_RFs;
@@ -835,7 +840,7 @@ namespace MLGlattice
             return VoxInd;
         }
 
-        public static List<NurbsCurve> SelectModelMinimizedE (List<List<NurbsCurve>> InputCurve,List<List<double>> NewModels, List<List<double>> ExistingModels)
+        public static List<NurbsCurve> SelectModelMinimizedE (List<List<NurbsCurve>> InputCurve,List<List<double>> NewModels, List<List<double>> ExistingModels,out List<double> VoxIND)
         {
             int selectedInd = 0;
             double MinE = 10^8;
@@ -850,6 +855,7 @@ namespace MLGlattice
                 }    
             }
             var GModel = InputCurve[selectedInd];
+            VoxIND = NewModels[selectedInd];
             return GModel;
         }
 
@@ -915,6 +921,19 @@ namespace MLGlattice
             formatter.Serialize(stream, CRVS);
             stream.Close();
             #endregion
+        }
+
+        public static List<NurbsCurve> LoadFiles(string ModName)
+        {
+            string path = ModName;
+            #region Deserializing partition list
+            IFormatter formatter = new BinaryFormatter();
+            Stream stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            List<NurbsCurve> Curves = new List<NurbsCurve>();
+            Curves = (List<NurbsCurve>)formatter.Deserialize(stream);
+            #endregion
+
+            return Curves;
         }
 
     }

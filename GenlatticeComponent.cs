@@ -83,7 +83,7 @@ namespace Genlattice
         {
             pManager.AddNumberParameter("Choice", "Choise", "1 for ST struts , 2 for CD struts", GH_ParamAccess.item);
             pManager.AddNumberParameter("m_STradi", "m_STradi", "Particle diameter", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Tau4", "Tau4", "Min Volume required", GH_ParamAccess.item);
+            //pManager.AddNumberParameter("Tau4", "Tau4", "Min Volume required", GH_ParamAccess.item);
             pManager.AddNumberParameter("VoxNum", "VoxNum", "number of voxels on each edge", GH_ParamAccess.item);
 
         }
@@ -93,7 +93,7 @@ namespace Genlattice
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("ComTime", "ComTime", "ComTime", GH_ParamAccess.item);
+            //pManager.AddNumberParameter("ComTime", "ComTime", "ComTime", GH_ParamAccess.item);
             pManager.AddCurveParameter("listedCurves", "listedCurves", "listedCurves", GH_ParamAccess.list);
             //pManager.AddBrepParameter("Voxels", "Voxels", "Voxels", GH_ParamAccess.list);
             //pManager.AddNumberParameter("VoxIndex", "VoxIndex", "VoxIndex", GH_ParamAccess.item);
@@ -118,15 +118,18 @@ namespace Genlattice
 
             DA.GetData(0, ref STorCD);
             DA.GetData(1, ref m_STradi);
-            DA.GetData(2, ref m_Tau4);
-            DA.GetData(3, ref m_VoxNumonEdge);
+            //DA.GetData(2, ref m_Tau4);
+            DA.GetData(2, ref m_VoxNumonEdge);
 
             Init();
             m_PreviousTime = DateTime.Now;
+            Genlattice();
+
+
 
             if (File.Exists(path))
             {
-                GeneratedModelsIndex= GLFunctions.ReadTracedInfo(path);
+                GeneratedModelsIndex = GLFunctions.ReadTracedInfo(path);
                 Tracedmodels = GeneratedModelsIndex.Count;
             }
 
@@ -146,23 +149,27 @@ namespace Genlattice
 
             m_Voxels = GLFunctions.VoxelizeUnitcell(m_edgeSize, m_VoxNumonEdge);
 
-            
-            for (int i0 = Tracedmodels; i0 < 1000; i0++)
+
+            for (int i0 = Tracedmodels; i0 < 2000; i0++)
             {
+
                 List<double> VoxIndex = new List<double>();
 
-                //string command1 = "/C del *.*";
-                //Process.Start("cmd.exe", command1);
+                if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck"))
+                {
+                    System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck");
+                }
+
 
                 m_CoreCurves = new List<NurbsCurve>();
                 bool ValidModel = true;
 
-                if (i0==0)
+                if (i0 == 0)
                 {
-                    St:
+                St:
                     m_CoreCurves = new List<NurbsCurve>();
                     Genlattice();
-                    var solidVox0 = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, 0.008, m_Voxels, out VoxIndex);
+                    var solidVox0 = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_Voxels, out VoxIndex);
 
                     for (int ii = 0; ii < m_CoreCurves.Count; ii++)
                     {
@@ -178,7 +185,7 @@ namespace Genlattice
                 {
                     List<List<NurbsCurve>> NewModels = new List<List<NurbsCurve>>();
                     List<List<double>> NewModelsIndexs = new List<List<double>>();
-                    int cntr =0;
+                    int cntr = 0;
                     for (int j = 0; j < 50; j++)
                     {
                         m_CoreCurves = new List<NurbsCurve>();
@@ -198,21 +205,19 @@ namespace Genlattice
                         if (!ValidModel)
                             continue;
 
-                        var solidVox0 = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, 0.008, m_Voxels, out VoxIndex);
+                        var solidVox0 = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_Voxels, out VoxIndex);
                         NewModelsIndexs.Add(VoxIndex);
                         var C1 = GLFunctions.DeepCopyCRV(m_CoreCurves);
                         NewModels.Add(C1);
                     }
 
-                    m_CoreCurves = GLFunctions.SelectModelMinimizedE(NewModels, NewModelsIndexs, GeneratedModelsIndex);
+                    m_CoreCurves = GLFunctions.SelectModelMinimizedE(NewModels, NewModelsIndexs, GeneratedModelsIndex, out VoxIndex);
 
 
                 }
 
 
-
-                //m_solidVoxels = GLFunctions.MapGLatticeToVoxels(m_CoreCurves, m_STradi / 2, m_Voxels, out List<double> VoxIndes);
-                Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(m_CoreCurves, new Vector3d(0, 0, -0.001), 0.008, 0.012);
+                Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(m_CoreCurves, new Vector3d(0, 0, -0.0001), m_STradi, m_STradi + 0.008);
 
                 if (FEMresults.Item1 == 0 && FEMresults.Item2 == 0 && FEMresults.Item3 == 0)
                 {
@@ -227,7 +232,7 @@ namespace Genlattice
                     System.IO.File.AppendAllText(path, VoxIndex[j].ToString() + ",");
                 }
 
-                System.IO.File.AppendAllText(path, FEMresults.Item1.ToString() + ",");
+                System.IO.File.AppendAllText(path, FEMresults.Item2.ToString() + ",");
                 System.IO.File.AppendAllText(path, FEMresults.Item3.ToString() + "\n");
 
 
@@ -236,21 +241,10 @@ namespace Genlattice
                 //DeleteFEMfiles();
             }
 
-            
+
             double TimeCom = (DateTime.Now - m_PreviousTime).Minutes;
 
-
-            DA.SetData(0, TimeCom);
-            //m_CoreCurves = GLFunctions.UnitcellMakerNoscale(m_CoreCurves);
-
-            //DA.SetDataList(1, m_CoreCurves);
-            //DA.SetDataList(1, m_solidVoxels);
-            //DA.SetDataList(2, VoxIndes);
-
-            //DA.SetData(2, FEMresults.Item1);
-            //DA.SetData(3, FEMresults.Item2);
-            //DA.SetData(4, FEMresults.Item3);
-
+            DA.SetDataList(0, m_CoreCurves);
         }
 
         void Genlattice()
@@ -303,6 +297,7 @@ namespace Genlattice
 
         void Init()
         {
+            Random rd = new Random();
             m_CoreCurves = new List<NurbsCurve>();
             m_CNcurves = new List<Curve>();
             m_Mrcurves = new List<Curve>();
@@ -316,12 +311,13 @@ namespace Genlattice
             m_StrutsGraph = new List<List<Brep>>();
             
             m_PrunedST = new List<Brep>();
-            m_STradi *= 2;
+            //m_STradi *= 2;
             path = "D://LatticeStructure//Traindata.csv";
 
             m_edgeSize = 1;
             m_Tau2 = 45;
             m_Tau3 = 95;
+            m_Tau4 = rd.NextDouble()*(0.0012)+0.0025;
             m_Tau5 = 1;
             m_alpha = (90 - m_Tau2) * (Math.PI / 180);
             m_theta = (180 - m_Tau3) * (Math.PI / 180);
@@ -329,6 +325,11 @@ namespace Genlattice
             if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt"))
             {
                 System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
+            }
+
+            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck"))
+            {
+                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck");
             }
 
             if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt"))
@@ -494,6 +495,8 @@ namespace Genlattice
                 {
                     var IntCurves = InterCones(PASCone, OVECone);
 
+                    if (IntCurves == null)
+                        continue;
                     n1 = random.NextDouble();
                     Pt[0] = IntCurves[0].PointAt(n1);
                     n2 = random.NextDouble();
@@ -636,7 +639,8 @@ namespace Genlattice
 
             Rhino.Geometry.Intersect.Intersection.BrepBrep(PCone, OCone, tolarance, out Curve[] intcurve, out Point3d[] intpoints);
 
-
+            if (intcurve.Length == 0)
+                return null;
 
             Point3d Pt1 = intcurve[0].PointAtStart;
             Point3d Pt2 = intcurve[0].PointAtEnd;
@@ -1058,6 +1062,7 @@ namespace Genlattice
                     Cone Co1 = new Cone(Bp1, 1, Math.Tan(m_alpha));
                     Cone Co2 = new Cone(Bp1, -1, Math.Tan(m_alpha));
 
+                    ComeH:
                     if (Pt0.Z > 0.95)
                         PtF = RandPtonCone(Co2);
                     else if (Pt0.Z < 0.01)
@@ -1083,7 +1088,18 @@ namespace Genlattice
 
                     V0 = Pt1 - Pt0;
 
+
                     var NewS = ParTrace(Pt0, V0, dia, true, out List<NurbsCurve> NewCoreCurves);
+
+                    Vector3d v1 = CoreCurves[ni1].TangentAtEnd;
+                    Vector3d v2 = NewCoreCurves[0].TangentAtEnd;
+                    double ANGG = Vector3d.VectorAngle(v1, v2) * (180 / Math.PI);
+
+                    if (ANGG > 90)
+                        ANGG = 180 - ANGG;
+
+                    if (ANGG < 10)
+                        goto ComeH;
 
                     bool SelfIntersect = false;
 
@@ -1095,10 +1111,12 @@ namespace Genlattice
                     {
                         for (int j = 0; j < NewCoreCurves.Count; j++)
                         {
+                            if (i == ni1)
+                                continue;
                             var a1 = NewCoreCurves[j].ClosestPoints(CoreCurves[i], out Point3d Pti1, out Point3d Pti2);
                             Point3d PP0 = NewCoreCurves[j].PointAtLength(dia);
 
-                            if (PP0.DistanceTo(NewCoreCurves[j].PointAtStart) < Pti1.DistanceTo(NewCoreCurves[j].PointAtStart) && Pti1.DistanceTo(Pti2) < dia + dia / 2.0)
+                            if ( Pti1.DistanceTo(Pti2) < 2.1*dia)
                             {
                                 SelfIntersect = true;
                                 break;
@@ -1346,12 +1364,16 @@ namespace Genlattice
                     PtProf = CoreCurves[ni].PointAt(n);
                     V0 = GetDir(PtProf, PL[i]);
 
-
-
                     if (V0 == Vector3d.Zero)
                     {
                         continue;
                     }
+
+                    double ANGGG = Vector3d.VectorAngle(V0, CoreCurves[ni].TangentAtEnd) * (180 / Math.PI);
+                    if(ANGGG>90)
+                        ANGGG =180-ANGGG;
+                    if (ANGGG < 10)
+                        continue;
 
                     untouched = false;
                     
@@ -1396,10 +1418,12 @@ namespace Genlattice
 
                         for (int k = 0; k < CoreCurves.Count; k++)
                         {
+                            if (k == ni)
+                                continue;
                             var a = C0.ClosestPoints(CoreCurves[k], out Point3d Pti1, out Point3d Pti2);
-                            Point3d PP0 = C0.PointAtLength(dia);
+                            
 
-                            if (PP0.DistanceTo(C0.PointAtStart) < Pti1.DistanceTo(C0.PointAtStart) && Pti1.DistanceTo(Pti2) < dia + dia / 2.0)
+                            if ( Pti1.DistanceTo(Pti2) < dia*2.1)
                             {
                                 Selfintersect = true;
                                 break;

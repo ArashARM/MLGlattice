@@ -65,6 +65,7 @@
     <Compile Include="MLGlatticeComponent.cs" />
     <Compile Include="MLGlatticeInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResoChange.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="rhino.ico" />
