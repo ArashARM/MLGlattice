@@ -408,7 +408,7 @@ namespace MLGlattice
             
 
  
-            string Pycode = "C://Users//Arash//Desktop//MLGlattice//bin//" + Modname + "Code.py";
+            string Pycode = "C://Users//scadscad//Desktop//MLGLAT//bin//" + Modname + "Code.py";
             System.IO.File.Delete(Pycode);
        
             //Libreries
@@ -683,7 +683,7 @@ namespace MLGlattice
 
             //meshing
             System.IO.File.AppendAllText(Pycode, "try:\n");
-            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.035)\n");
+            System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].seedPart(deviationFactor=0.1, minSizeFactor = 0.1, size = 0.055)\n");
             System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].setMeshControls(elemShape=TET, regions =mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), technique = FREE)\n");
             System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].setElementType(elemTypes=(ElemType(elemCode = C3D20R, elemLibrary = STANDARD), ElemType(elemCode = C3D15,elemLibrary = STANDARD), ElemType(elemCode = C3D10, elemLibrary = STANDARD)), regions = (mdb.models['Model-1'].parts['LsStruc'].cells.getSequenceFromMask(('[#1 ]', ), ), ))\n");
             System.IO.File.AppendAllText(Pycode, " mdb.models['Model-1'].parts['LsStruc'].generateMesh()\n");
@@ -749,12 +749,13 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "sortie.close()\n");
 
             System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
+
             
-            //string command1 = "/C abaqus cae noGUI=" + Modname + "Code.py";
+            //string command = "/C abaqus cae noGUI=" + Modname + "Code.py";
             string command = "/C abaqus cae script=" + Modname + "Code.py";
             Process.Start("cmd.exe", command);
 
-            string path = "C://Users//Arash//Desktop//MLGlattice//bin//Done.txt";
+            string path = "C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt";
 
             int CNA = 0;
 
@@ -782,10 +783,10 @@ namespace MLGlattice
             Process.Start("cmd.exe", command1);
             Thread.Sleep(5000);
 
-            Tuple<double, double,double> m_RFs = ImportFEMResults("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
+            Tuple<double, double,double> m_RFs = ImportFEMResults("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt");
 
-            System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
-            System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt");
+            System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt");
+            System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt");
 
 
              
@@ -865,7 +866,7 @@ namespace MLGlattice
             for (int i = 0; i < ExistingVoxInds.Count; i++)
             {
                 double D = ShapeDistance(VoxIndex0, ExistingVoxInds[i]);
-                D = 1 / D;
+                D = 1 / (D*D);
                 E = +D;
             }
 
@@ -879,7 +880,7 @@ namespace MLGlattice
             double SigmaD = 0;
             for (int i = 0; i < VoxIndex1.Count; i++)
             {
-                double Dis = Math.Pow(VoxIndex0[i] - VoxIndex1[1],2);
+                double Dis = Math.Pow(VoxIndex0[i] - VoxIndex1[i],2);
                 SigmaD += Dis;
             }
 
@@ -913,7 +914,7 @@ namespace MLGlattice
 
         public static void SaveST(List<NurbsCurve> CRVS, string ModName)
         {
-            string filesave = "D://MLModels//GLattice" + ModName + ".txt";
+            string filesave = "C://MLModels//GLattice" + ModName + ".txt";
             #region serializing CRVS
             File.Delete(filesave);
             IFormatter formatter = new BinaryFormatter();

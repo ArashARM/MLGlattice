@@ -111,7 +111,7 @@ namespace Genlattice
         /// to store data in output parameters.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-
+            Random FR = new Random();
             m_loadVecor = new Vector3d();
             List<List<double>> GeneratedModelsIndex = new List<List<double>>();
             int Tracedmodels = 0;
@@ -150,14 +150,17 @@ namespace Genlattice
             m_Voxels = GLFunctions.VoxelizeUnitcell(m_edgeSize, m_VoxNumonEdge);
 
 
-            for (int i0 = Tracedmodels; i0 < 2000; i0++)
+            for (int i0 = Tracedmodels; i0 < 100000; i0++)
             {
 
                 List<double> VoxIndex = new List<double>();
 
-                if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck"))
+                m_Tau4 = FR.NextDouble() * (0.0012) + 0.0025;
+
+
+                if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck"))
                 {
-                    System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck");
+                    System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck");
                 }
 
 
@@ -175,8 +178,8 @@ namespace Genlattice
                     {
                         if (m_CoreCurves[ii].GetLength() < 0.01)
                         {
-                            //i0--;
-                            //ValidModel = false;
+                            i0--;
+                            ValidModel = false;
                             goto St;
                         }
                     }
@@ -186,7 +189,7 @@ namespace Genlattice
                     List<List<NurbsCurve>> NewModels = new List<List<NurbsCurve>>();
                     List<List<double>> NewModelsIndexs = new List<List<double>>();
                     int cntr = 0;
-                    for (int j = 0; j < 50; j++)
+                    for (int j = 0; j < 100; j++)
                     {
                         m_CoreCurves = new List<NurbsCurve>();
                         Genlattice();
@@ -238,7 +241,7 @@ namespace Genlattice
 
                 GeneratedModelsIndex.Add(VoxIndex);
                 GLFunctions.SaveST(m_CoreCurves, i0.ToString());
-                //DeleteFEMfiles();
+                DeleteFEMfiles();
             }
 
 
@@ -257,6 +260,9 @@ namespace Genlattice
 
                     Point3d P0 = RandFirstPt();
                     m_TrunkSet = ParTrace(P0, Vector3d.Zero, m_STradi, true, out m_CoreCurves);
+                    if (m_TrunkSet == null)
+                        continue;
+
                     m_SubLat = ParProfi(m_TrunkSet, m_CoreCurves, m_STradi, out m_CoreCurves, out m_vol, out bool solved);
 
                     if (solved == false)
@@ -312,7 +318,7 @@ namespace Genlattice
             
             m_PrunedST = new List<Brep>();
             //m_STradi *= 2;
-            path = "D://LatticeStructure//Traindata.csv";
+            path = "C://LatticeStructure//Traindata.csv";
 
             m_edgeSize = 1;
             m_Tau2 = 45;
@@ -322,22 +328,22 @@ namespace Genlattice
             m_alpha = (90 - m_Tau2) * (Math.PI / 180);
             m_theta = (180 - m_Tau3) * (Math.PI / 180);
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//RD.txt");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt");
             }
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lck");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck");
             }
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//Done.txt");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt");
             }
 
-            DeleteFEMfiles();
+            //DeleteFEMfiles();
 
             dm = new Interval(0, 1);
             tolarance = DocumentTolerance();
@@ -349,64 +355,64 @@ namespace Genlattice
 
         void DeleteFEMfiles()
         {
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//abaqus.rpy"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//abaqus.rpy"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//abaqus.rpy");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//abaqus.rpy");
             }
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lok"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lok"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.lok");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lok");
             }
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.com"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.com"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.com");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.com");
             }
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.dat"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.dat"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.dat");
-            }
-
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.inp"))
-            {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.inp");
-            }
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.ipm"))
-            {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.ipm");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.dat");
             }
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.txt"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.inp"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.txt");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.inp");
             }
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.msg"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.ipm"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.msg");
-            }
-
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.odb"))
-            {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.odb");
-            }
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.prt"))
-            {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.prt");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.ipm");
             }
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.sim"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.txt"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.sim");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.txt");
+            }
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.msg"))
+            {
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.msg");
             }
 
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.sta"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.odb"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//TestJob.sta");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.odb");
             }
-            if (File.Exists("C://Users//Arash//Desktop//MLGlattice//bin//UnitCellFEMCode.py"))
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.prt"))
             {
-                System.IO.File.Delete("C://Users//Arash//Desktop//MLGlattice//bin//UnitCellFEMCode.py");
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.prt");
+            }
+
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sim"))
+            {
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sim");
+            }
+
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sta"))
+            {
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sta");
+            }
+            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//UnitCellFEMCode.py"))
+            {
+                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//UnitCellFEMCode.py");
             }
         }
         /// <summary>
@@ -496,7 +502,7 @@ namespace Genlattice
                     var IntCurves = InterCones(PASCone, OVECone);
 
                     if (IntCurves == null)
-                        continue;
+                        return Vector3d.YAxis;
                     n1 = random.NextDouble();
                     Pt[0] = IntCurves[0].PointAt(n1);
                     n2 = random.NextDouble();
@@ -700,7 +706,19 @@ namespace Genlattice
         /// <returns></returns>
         List<Brep[]> ParTrace(Point3d P0, Vector3d V0, double m_STradi, bool FirstTrace, out List<NurbsCurve> CoreCurves)
         {
-            StartAgain:
+
+            int FCont = 0;
+
+
+            H:
+
+            FCont++;
+
+            if (FCont > 5)
+            {
+                CoreCurves = new List<NurbsCurve>();    
+                return null;
+            }
 
             List<Brep[]> S = new List<Brep[]>();
             //List<Point3d> P = new List<Point3d>();
@@ -726,11 +744,17 @@ namespace Genlattice
                 counter++;
                 if (counter == 100)
                 {
-                    goto StartAgain;
+                    goto H;
                 }
                 if (i == 0)
                 {
                     v[i] = RandStDir(V0);
+                    if (v[i]== Vector3d.YAxis)
+                    {
+                        CoreCurves = new List<NurbsCurve>();
+                        return null;
+                    }    
+                        
                 }
                 else
                 {
@@ -738,6 +762,11 @@ namespace Genlattice
                     {
 
                         v[i] = RandStDir(Vector3d.Zero);
+                        if (v[i] == Vector3d.YAxis)
+                        {
+                            CoreCurves = new List<NurbsCurve>();
+                            return null;
+                        }
 
                         if (v[i - 1].Z < 0)
                         {
@@ -768,6 +797,11 @@ namespace Genlattice
                     else
                     {
                         v[i] = RandStDir(v[i - 1]);
+                        if (v[i] == Vector3d.YAxis)
+                        {
+                            CoreCurves = new List<NurbsCurve>();
+                            return null;
+                        }
                     }
 
                 }
@@ -794,6 +828,25 @@ namespace Genlattice
                 if (PPtest.Z < 0.1)
                 {
                     PPtest.Z = 0;
+                }
+
+                if (PPtest.X > 0.9)
+                {
+                    PPtest.X = 1;
+                }
+
+                if (PPtest.X < 0.1)
+                {
+                    PPtest.X = 0;
+                }
+                if (PPtest.Y > 0.9)
+                {
+                    PPtest.Y = 1;
+                }
+
+                if (PPtest.Y < 0.1)
+                {
+                    PPtest.Y = 0;
                 }
 
                 C[i] = new Line(P[i], PPtest);
@@ -1091,6 +1144,14 @@ namespace Genlattice
 
                     var NewS = ParTrace(Pt0, V0, dia, true, out List<NurbsCurve> NewCoreCurves);
 
+                    if (NewS == null)
+                    {
+                        Solved = false;
+                        OcVolume = 0;
+                        CoreCurvesUpdated = CoreCurves;
+                        return SubLat;
+                    }
+
                     Vector3d v1 = CoreCurves[ni1].TangentAtEnd;
                     Vector3d v2 = NewCoreCurves[0].TangentAtEnd;
                     double ANGG = Vector3d.VectorAngle(v1, v2) * (180 / Math.PI);
@@ -1328,7 +1389,7 @@ namespace Genlattice
                 bool Selfintersect = false;
                 Brep[] Sb0 = new Brep[1];
                 List<Brep[]> TSb = new List<Brep[]>();
-                List<NurbsCurve> NewCoreCurves = new List<NurbsCurve>();
+               
 
                 for (int j = 0; j < CoreCurves.Count; j++)
                 {
@@ -1447,6 +1508,9 @@ namespace Genlattice
                         S.Add(Sb0);
                         X++;
 
+                        List<Brep[]> Tsb1 = new List<Brep[]>();
+                        List<NurbsCurve> NewCoreCurves = new List<NurbsCurve>();
+
                         if (Math.Round(C0.PointAtEnd.Z,1)> 0 && C0.PointAtEnd.Z < 1)
                         {
                             //Point3d PP0 = C0.PointAtEnd;
@@ -1473,22 +1537,35 @@ namespace Genlattice
                             while (NotIntSecc)
                             {
                                 ContM++;
-                                if (ContM > 50)
+                                Tsb1 = new List<Brep[]>();
+                                NewCoreCurves = new List<NurbsCurve>();
+                                if (Math.Abs(ContM) > 50)
                                 {
-                                    continue;
+                                    Solved = false;
+                                    Tsb1 = null;
+                                    break;
                                 }
 
-                                TSb = ParTrace(C0.PointAtEnd, V0, dia, true, out NewCoreCurves);
+                                Tsb1 = ParTrace(C0.PointAtEnd, V0, dia, true, out NewCoreCurves);
+
+                                if(Tsb1 == null)
+                                {
+                                    Solved = false;
+                                    break;
+                                }
+
                                 Selfintersect = false;
 
                                 for (int k1 = 0; k1 < CoreCurves.Count; k1++)
                                 {
                                     for (int k2 = 0; k2 < NewCoreCurves.Count; k2++)
                                     {
+                                        if (k1 == CoreCurves.Count - 1)
+                                            continue;
                                         var a1 = NewCoreCurves[k2].ClosestPoints(CoreCurves[k1], out Point3d Pti1, out Point3d Pti2);
                                         Point3d PP0 = NewCoreCurves[k2].PointAtLength(dia);
 
-                                        if (PP0.DistanceTo(NewCoreCurves[k2].PointAtStart) < Pti1.DistanceTo(NewCoreCurves[k2].PointAtStart) && Pti1.DistanceTo(Pti2) < dia + dia / 2)
+                                        if ( Pti1.DistanceTo(Pti2) < dia*2.1)
                                         {
                                             Selfintersect = true;
                                             break;
@@ -1512,8 +1589,12 @@ namespace Genlattice
 
                             CoreCurves.AddRange(NewCoreCurves);
 
+                            if (Tsb1 != null)
+                            {
+                                S.AddRange(Tsb1);
+                            }
 
-                            S.AddRange(TSb);
+                           
                             ///******************************EndOf default
 
                         }
@@ -1700,7 +1781,7 @@ namespace Genlattice
                             var a = C.ClosestPoints(CoreCurves[k], out Point3d Pti1, out Point3d Pti2);
                             Point3d PP0 = C.PointAtLength(dia);
 
-                            if (PP0.DistanceTo(C.PointAtStart) < Pti1.DistanceTo(C.PointAtStart) && Pti1.DistanceTo(Pti2) < dia + dia / 2.0)
+                            if (PP0.DistanceTo(C.PointAtStart) < Pti1.DistanceTo(C.PointAtStart) && Pti1.DistanceTo(Pti2) < dia*2.1)
                             {
                                 Selfintersect = true;
                                 break;
