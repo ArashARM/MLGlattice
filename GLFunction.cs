@@ -841,6 +841,56 @@ namespace MLGlattice
             return VoxInd;
         }
 
+        public static List<List<double>> ReadTracedInfo1(string path)
+        {
+            List<List<double>> tracedInfo = new List<List<double>>();
+
+            string Totalinfo = System.IO.File.ReadAllText(path);
+
+            string[] coords;
+            string[] lines = Totalinfo.Split(new string[] { "\n" }, StringSplitOptions.None);
+
+            for (int i = 1; i < lines.Length - 1; i++)
+            {
+                List<double> Info = new List<double>();
+                coords = lines[i].Split(new string[] { "," }, StringSplitOptions.None);
+
+                Info.Add(Convert.ToDouble(coords[coords.Length - 2]));
+                Info.Add(Convert.ToDouble(coords[coords.Length - 1]));
+
+                tracedInfo.Add(Info);
+            }
+
+            return tracedInfo;
+        }
+
+
+
+            public static List<List<double>> ReadTracedInfo22(string path)
+        {
+            List<List<double>> tracedInfo = new List<List<double>>();
+
+            string Totalinfo = System.IO.File.ReadAllText(path);
+
+            string[] coords;
+            string[] lines = Totalinfo.Split(new string[] { "\n" }, StringSplitOptions.None);
+
+            for (int i = 1; i < lines.Length - 1; i++)
+            {
+                List<double> Info = new List<double>();
+                coords = lines[i].Split(new string[] { "," }, StringSplitOptions.None);
+
+                for (int j = 1; j < coords.Length - 2; j++)
+                {
+                    Info.Add(Convert.ToDouble(coords[j]));
+                }
+
+                tracedInfo.Add(Info);
+            }
+
+            return tracedInfo;
+        }
+
         public static List<NurbsCurve> SelectModelMinimizedE (List<List<NurbsCurve>> InputCurve,List<List<double>> NewModels, List<List<double>> ExistingModels,out List<double> VoxIND)
         {
             int selectedInd = 0;
