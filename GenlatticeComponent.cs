@@ -126,6 +126,7 @@ namespace Genlattice
             Genlattice();
 
 
+            path = "D://LatticeStructure//Traindata.csv";
 
             if (File.Exists(path))
             {
@@ -158,9 +159,9 @@ namespace Genlattice
                 m_Tau4 = FR.NextDouble() * (0.0012) + 0.0025;
 
 
-                if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck"))
+                if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.lck"))
                 {
-                    System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck");
+                    System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.lck");
                 }
 
 
@@ -318,7 +319,7 @@ namespace Genlattice
             
             m_PrunedST = new List<Brep>();
             //m_STradi *= 2;
-            path = "C://LatticeStructure//Traindata.csv";
+            path = "D://LatticeStructure//Traindata.csv";
 
             m_edgeSize = 1;
             m_Tau2 = 45;
@@ -328,19 +329,19 @@ namespace Genlattice
             m_alpha = (90 - m_Tau2) * (Math.PI / 180);
             m_theta = (180 - m_Tau3) * (Math.PI / 180);
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//RD.txt"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//.txt");
             }
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.lck"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lck");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.lck");
             }
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//Done.txt"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//Done.txt");
             }
 
             //DeleteFEMfiles();
@@ -355,64 +356,64 @@ namespace Genlattice
 
         void DeleteFEMfiles()
         {
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//abaqus.rpy"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//abaqus.rpy"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//abaqus.rpy");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//abaqus.rpy");
             }
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lok"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.lok"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.lok");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.lok");
             }
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.com"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.com"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.com");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.com");
             }
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.dat"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.dat"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.dat");
-            }
-
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.inp"))
-            {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.inp");
-            }
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.ipm"))
-            {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.ipm");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.dat");
             }
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.txt"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.inp"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.txt");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.inp");
             }
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.msg"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.ipm"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.msg");
-            }
-
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.odb"))
-            {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.odb");
-            }
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.prt"))
-            {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.prt");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.ipm");
             }
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sim"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.txt"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sim");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.txt");
+            }
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.msg"))
+            {
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.msg");
             }
 
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sta"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.odb"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//TestJob.sta");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.odb");
             }
-            if (File.Exists("C://Users//scadscad//Desktop//MLGLAT//bin//UnitCellFEMCode.py"))
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.prt"))
             {
-                System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//UnitCellFEMCode.py");
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.prt");
+            }
+
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.sim"))
+            {
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.sim");
+            }
+
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.sta"))
+            {
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//TestJob.sta");
+            }
+            if (File.Exists("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//UnitCellFEMCode.py"))
+            {
+                System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//UnitCellFEMCode.py");
             }
         }
         /// <summary>

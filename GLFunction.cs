@@ -408,7 +408,7 @@ namespace MLGlattice
             
 
  
-            string Pycode = "C://Users//scadscad//Desktop//MLGLAT//bin//" + Modname + "Code.py";
+            string Pycode = "C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//" + Modname + "Code.py";
             System.IO.File.Delete(Pycode);
        
             //Libreries
@@ -748,14 +748,14 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, "sortie.close()\n");
 
-            System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
+            //System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
 
             
             //string command = "/C abaqus cae noGUI=" + Modname + "Code.py";
             string command = "/C abaqus cae script=" + Modname + "Code.py";
             Process.Start("cmd.exe", command);
 
-            string path = "C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt";
+            string path = "C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//Done.txt";
 
             int CNA = 0;
 
@@ -766,8 +766,8 @@ namespace MLGlattice
                 if (CNA > 280)
                 {
                     Tuple<double, double, double> Res = new Tuple<double, double, double>(0, 0, 0);
-                    string command2 = "/C taskkill/im cmd.exe";
-                    Process.Start("cmd.exe", command2);
+                    //string command2 = "/C taskkill/im cmd.exe";
+                    //Process.Start("cmd.exe", command2);
                     Thread.Sleep(5000);
                     return Res;
                 }    
@@ -779,14 +779,14 @@ namespace MLGlattice
                 }
 
             }
-            string command1 = "/C taskkill/im cmd.exe";
-            Process.Start("cmd.exe", command1);
+            //string command1 = "/C taskkill/im cmd.exe";
+            //Process.Start("cmd.exe", command1);
             Thread.Sleep(5000);
 
-            Tuple<double, double,double> m_RFs = ImportFEMResults("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt");
+            Tuple<double, double,double> m_RFs = ImportFEMResults("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//RD.txt");
 
-            System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//RD.txt");
-            System.IO.File.Delete("C://Users//scadscad//Desktop//MLGLAT//bin//Done.txt");
+            System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//RD.txt");
+            System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//Done.txt");
 
 
              
@@ -964,7 +964,7 @@ namespace MLGlattice
 
         public static void SaveST(List<NurbsCurve> CRVS, string ModName)
         {
-            string filesave = "C://MLModels//GLattice" + ModName + ".txt";
+            string filesave = "D://MLModels//GLattice" + ModName + ".txt";
             #region serializing CRVS
             File.Delete(filesave);
             IFormatter formatter = new BinaryFormatter();
