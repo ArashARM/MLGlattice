@@ -351,7 +351,7 @@ namespace MLGlattice
             return rtnvector;
         }
 
-        public static Tuple<double, double,double> UnitCellFEM(List<NurbsCurve> InputCVS, Vector3d DisVec, double PartRadii, double SphareRadii)
+        public static Tuple<double, double,double,double> UnitCellFEM(List<NurbsCurve> InputCVS, Vector3d DisVec, double PartRadii, double SphareRadii)
         {
 
             List<NurbsCurve> CRVS = DeepCopyCRV(InputCVS);
@@ -408,7 +408,7 @@ namespace MLGlattice
             
 
  
-            string Pycode = "C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//" + Modname + "Code.py";
+            string Pycode = "C://Users//Arash//Desktop//MLGLattice//bin//" + Modname + "Code.py";
             System.IO.File.Delete(Pycode);
        
             //Libreries
@@ -594,7 +594,7 @@ namespace MLGlattice
 
             //if cannt booalena
             System.IO.File.AppendAllText(Pycode, "except:\n");
-            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f' %(0,0,0))\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f,%f' %(0,0,0,0))\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
             System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
@@ -638,7 +638,7 @@ namespace MLGlattice
             //if cannt mesh
 
             System.IO.File.AppendAllText(Pycode, "except:\n");
-            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f' %(0,0,0))\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f,%f' %(0,0,0,0))\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
             System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
@@ -693,7 +693,7 @@ namespace MLGlattice
 
             //if cannt mesh
             System.IO.File.AppendAllText(Pycode, "except:\n");
-            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f' %(0,0,0))\n");
+            System.IO.File.AppendAllText(Pycode, " sortie.write('%f,%f,%f,%f' %(0,0,0,0))\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
             System.IO.File.AppendAllText(Pycode, " sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, " sortie.close()\n");
@@ -732,6 +732,9 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "        s11 = fieldValues[q].mises\n");
             System.IO.File.AppendAllText(Pycode, "        Smis.append(s11)\n");
             System.IO.File.AppendAllText(Pycode, "   MaxStress = max(Smis)\n");
+            System.IO.File.AppendAllText(Pycode, "   ALLSE=session.XYDataFromHistory(odb=odb,name='ALLSE', outputVariableName='Strain energy: ALLSE for Whole Model',steps=('Step-1', ), )\n");
+            System.IO.File.AppendAllText(Pycode, "   StrainEN=ALLSE[1][1]\n");
+            System.IO.File.AppendAllText(Pycode, "   MaxStress = max(Smis)\n");
 
 
 
@@ -742,20 +745,22 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "   StVol = 0.00\n");
             System.IO.File.AppendAllText(Pycode, "   FVratio = 0.00\n");
             System.IO.File.AppendAllText(Pycode, "   MaxStress = 0.00\n");
+            System.IO.File.AppendAllText(Pycode, "   StrainEN = 0.00\n");
 
-            System.IO.File.AppendAllText(Pycode, "sortie.write('%f,%f,%f' %(totallRf,FVratio,MaxStress))\n");
+
+            System.IO.File.AppendAllText(Pycode, "sortie.write('%f,%f,%f,%f' %(totallRf,FVratio,MaxStress,StrainEN))\n");
             System.IO.File.AppendAllText(Pycode, "sortie.close()\n");
             System.IO.File.AppendAllText(Pycode, "sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, "sortie.close()\n");
 
-            //System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
+            System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
 
             
             //string command = "/C abaqus cae noGUI=" + Modname + "Code.py";
             string command = "/C abaqus cae script=" + Modname + "Code.py";
             Process.Start("cmd.exe", command);
 
-            string path = "C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//Done.txt";
+            string path = "C://Users//Arash//Desktop//MLGLattice//bin//Done.txt";
 
             int CNA = 0;
 
@@ -765,28 +770,28 @@ namespace MLGlattice
                 CNA++;
                 if (CNA > 280)
                 {
-                    Tuple<double, double, double> Res = new Tuple<double, double, double>(0, 0, 0);
-                    //string command2 = "/C taskkill/im cmd.exe";
-                    //Process.Start("cmd.exe", command2);
-                    Thread.Sleep(5000);
+                    Tuple<double, double, double,double> Res = new Tuple<double, double, double,double>(0, 0, 0,0);
+                    string command2 = "/C taskkill/im cmd.exe";
+                    Process.Start("cmd.exe", command2);
+                    Thread.Sleep(2000);
                     return Res;
                 }    
                 if (File.Exists(path))
                 {
-                    Thread.Sleep(6000);
+                    Thread.Sleep(3000);
                     //Process.GetCurrentProcess().Kill();
                     break;
                 }
 
             }
-            //string command1 = "/C taskkill/im cmd.exe";
-            //Process.Start("cmd.exe", command1);
+            string command1 = "/C taskkill/im cmd.exe";
+            Process.Start("cmd.exe", command1);
             Thread.Sleep(5000);
 
-            Tuple<double, double,double> m_RFs = ImportFEMResults("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//RD.txt");
+            Tuple<double, double,double,double> m_RFs = ImportFEMResults("C://Users//Arash//Desktop//MLGLattice//bin//RD.txt");
 
-            System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//RD.txt");
-            System.IO.File.Delete("C://Users//Arash//OneDrive//Desktop//MLGLattice//bin//Done.txt");
+            System.IO.File.Delete("C://Users//Arash//Desktop//MLGLattice//bin//RD.txt");
+            System.IO.File.Delete("C://Users//Arash//Desktop//MLGLattice//bin//Done.txt");
 
 
              
@@ -794,7 +799,7 @@ namespace MLGlattice
             return m_RFs;
         }
 
-        public static Tuple<double, double,double> ImportFEMResults(string FileName)
+        public static Tuple<double, double,double,double> ImportFEMResults(string FileName)
         {
             string Forces = System.IO.File.ReadAllText(FileName);
 
@@ -806,8 +811,9 @@ namespace MLGlattice
             double RF = Convert.ToDouble(coords[0]);
             double RFV = Convert.ToDouble(coords[1]);
             double MaxSTr = Convert.ToDouble(coords[2]);
+            double StrainEN = Convert.ToDouble(coords[3]);
 
-            Tuple<double, double,double>  RFs = new Tuple<double, double,double>(RF,RFV, MaxSTr);
+            Tuple<double, double,double,double>  RFs = new Tuple<double, double,double,double>(RF,RFV, MaxSTr,StrainEN);
 
             return RFs;
         }
@@ -855,8 +861,20 @@ namespace MLGlattice
                 List<double> Info = new List<double>();
                 coords = lines[i].Split(new string[] { "," }, StringSplitOptions.None);
 
-                Info.Add(Convert.ToDouble(coords[coords.Length - 2]));
-                Info.Add(Convert.ToDouble(coords[coords.Length - 1]));
+                if (Convert.ToDouble(coords[coords.Length - 3]) == 0 || Convert.ToDouble(coords[coords.Length - 3]) == 1)
+                {
+                    Info.Add(Convert.ToDouble(coords[coords.Length - 2]));
+                    Info.Add(Convert.ToDouble(coords[coords.Length - 1]));
+                    Info.Add(0);
+                }
+
+                else
+                {
+                    Info.Add(Convert.ToDouble(coords[coords.Length - 3]));
+                    Info.Add(Convert.ToDouble(coords[coords.Length - 2]));
+                    Info.Add(Convert.ToDouble(coords[coords.Length - 1]));
+                }
+
 
                 tracedInfo.Add(Info);
             }

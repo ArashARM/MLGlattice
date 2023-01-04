@@ -82,8 +82,9 @@ namespace MLGlattice
 
                 }
 
-                System.IO.File.AppendAllText(pathNEW, "Y" + 0.ToString() + ",");
-                System.IO.File.AppendAllText(pathNEW, "Y" + 1.ToString() + "\n");
+                System.IO.File.AppendAllText(pathNEW, "Y" + 0.ToString() + "(RF/V),");
+                System.IO.File.AppendAllText(pathNEW, "Y" + 1.ToString() + "(MaxST),");
+                System.IO.File.AppendAllText(pathNEW, "Y" + 2.ToString() + "(StrainEN) \n");
             }
 
             var TracedData = GLFunctions.ReadTracedInfo22(pathOld);
@@ -93,8 +94,9 @@ namespace MLGlattice
                
 
                 var GL = GLFunctions.LoadFiles(path + "GLattice" + i.ToString("0") + ".txt");
+                
 
-                Tuple<double, double, double> FEMresults = GLFunctions.UnitCellFEM(GL, DisVec, m_STradi, m_STradi + 0.008);
+                Tuple<double, double, double,double> FEMresults = GLFunctions.UnitCellFEM(GL, DisVec, m_STradi, m_STradi + 0.008);
 
 
 
@@ -107,7 +109,8 @@ namespace MLGlattice
 
 
                 System.IO.File.AppendAllText(pathNEW, FEMresults.Item2.ToString() + ",");
-                System.IO.File.AppendAllText(pathNEW, FEMresults.Item3.ToString() + "\n");
+                System.IO.File.AppendAllText(pathNEW, FEMresults.Item3.ToString() + ",");
+                System.IO.File.AppendAllText(pathNEW, FEMresults.Item4.ToString() + "\n");
             }
 
         }

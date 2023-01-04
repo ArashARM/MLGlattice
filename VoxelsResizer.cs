@@ -77,8 +77,9 @@ namespace MLGlattice
 
             }
 
-            System.IO.File.AppendAllText(pathNew, "Y" + 0.ToString() + ",");
-            System.IO.File.AppendAllText(pathNew, "Y" + 1.ToString() + "\n");
+            System.IO.File.AppendAllText(pathNew, "Y" + 0.ToString() + "(RF/V),");
+            System.IO.File.AppendAllText(pathNew, "Y" + 1.ToString() + "(MaxST),");
+            System.IO.File.AppendAllText(pathNew, "Y" + 2.ToString() + "(StrainEN)\n");
 
 
             for (int i = 0; i < TracedData.Count; i++)
@@ -111,8 +112,9 @@ namespace MLGlattice
                 }
 
                 System.IO.File.AppendAllText(pathNew, TracedData[i][0].ToString() + ",");
-                System.IO.File.AppendAllText(pathNew, TracedData[i][1].ToString() + "\n");
-                }
+                System.IO.File.AppendAllText(pathNew, TracedData[i][1].ToString() + ",");
+                System.IO.File.AppendAllText(pathNew, TracedData[i][2].ToString() + "\n");
+            }
 
             for (int i = 0; i < SolidBR.Count; i++)
             {
