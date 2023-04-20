@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
+using HDF.PInvoke;
 
 namespace MLGlattice
 {
@@ -67,7 +68,7 @@ namespace MLGlattice
             pathOld = path + "Traindata.csv";
 
 
-            var Voxels = GLFunctions.VoxelizeUnitcell(1, Voxsize);
+            var Voxels = GLFunctions.VoxelizeUnitcell(1, Voxsize,out List<Point3d> ASA);
             TracedData = GLFunctions.ReadTracedInfo1(pathOld);
 
             System.IO.File.AppendAllText(pathNew, " Model#" + ",");
@@ -77,13 +78,14 @@ namespace MLGlattice
 
             }
 
-            System.IO.File.AppendAllText(pathNew, "Y" + 0.ToString() + "(RF/V),");
-            System.IO.File.AppendAllText(pathNew, "Y" + 1.ToString() + "(MaxST),");
-            System.IO.File.AppendAllText(pathNew, "Y" + 2.ToString() + "(StrainEN)\n");
+            System.IO.File.AppendAllText(pathNew, "Y" + 0.ToString() + ",");
+            System.IO.File.AppendAllText(pathNew, "Y" + 1.ToString() + "\n");
 
 
-            for (int i = 0; i < TracedData.Count; i++)
-            {
+           for (int i = 0; i < TracedData.Count; i++)
+
+                //for (int i = 0; i < 10; i++)
+                {
                 System.IO.File.AppendAllText(pathNew, " Model" + i.ToString() + ",");
 
                 var GL = GLFunctions.LoadFiles(path + "GLattice" + i.ToString("0") + ".txt");
@@ -112,8 +114,7 @@ namespace MLGlattice
                 }
 
                 System.IO.File.AppendAllText(pathNew, TracedData[i][0].ToString() + ",");
-                System.IO.File.AppendAllText(pathNew, TracedData[i][1].ToString() + ",");
-                System.IO.File.AppendAllText(pathNew, TracedData[i][2].ToString() + "\n");
+                System.IO.File.AppendAllText(pathNew, TracedData[i][1].ToString() + "\n");
             }
 
             for (int i = 0; i < SolidBR.Count; i++)

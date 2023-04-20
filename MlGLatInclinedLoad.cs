@@ -69,7 +69,7 @@ namespace MLGlattice
 
             if (File.Exists(pathNEW))
             {
-                var GeneratedModelsIndex = GLFunctions.ReadTracedInfo22(pathNEW);
+                   var GeneratedModelsIndex = GLFunctions.ReadTracedInfo22(pathNEW);
                 StartIND = StartIND+GeneratedModelsIndex.Count;
             }
 

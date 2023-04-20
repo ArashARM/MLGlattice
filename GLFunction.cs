@@ -23,7 +23,7 @@ namespace MLGlattice
         /// <param name="edgesize"></Edge size for unit cell>
         /// <param name="VoxNumb"></number of Voxels on each edge>
         /// <returns/ a unit cell decomposed to VoxNumb*VoxNum*VoxNum voxels>
-        public static List<Brep> VoxelizeUnitcell(double edgesize,double VoxNumb)
+        public static List<Brep> VoxelizeUnitcell(double edgesize,double VoxNumb,out List<Point3d> Allpts)
         {
             List<Brep> Voxels = new List<Brep>();
 
@@ -75,8 +75,9 @@ namespace MLGlattice
                 Voxels.Add(Voxel);
             }
 
-            CenterPoints.Distinct().ToList();
+            //CenterPoints.Distinct().ToList();
 
+            Allpts = CenterPoints;
             return Voxels;
         }
 
@@ -719,6 +720,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "   RFy = region.historyOutputs['RF2'].data[1][1]\n");
             System.IO.File.AppendAllText(Pycode, "   RFz = region.historyOutputs['RF3'].data[1][1]\n");
             System.IO.File.AppendAllText(Pycode, "   totallRf = sqrt(RFx * RFx + RFy * RFy + RFz * RFz)\n");
+            System.IO.File.AppendAllText(Pycode, "   print totallRf\n");
             System.IO.File.AppendAllText(Pycode, "   mask=mdb.models['Model-1'].parts['CuttedUnitCell'].cells.getMask()\n");
             System.IO.File.AppendAllText(Pycode, "   cellobj_sequence= mdb.models['Model-1'].parts['CuttedUnitCell'].cells.getSequenceFromMask(mask=mask)\n");
             System.IO.File.AppendAllText(Pycode, "   StVol=mdb.models['Model-1'].parts['CuttedUnitCell'].getVolume(cells=cellobj_sequence)\n");
@@ -753,7 +755,7 @@ namespace MLGlattice
             System.IO.File.AppendAllText(Pycode, "sortie = open('Done.txt', 'w')\n");
             System.IO.File.AppendAllText(Pycode, "sortie.close()\n");
 
-            System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
+            //System.IO.File.AppendAllText(Pycode, "sys.exit()\n");
 
             
             //string command = "/C abaqus cae noGUI=" + Modname + "Code.py";
@@ -861,20 +863,8 @@ namespace MLGlattice
                 List<double> Info = new List<double>();
                 coords = lines[i].Split(new string[] { "," }, StringSplitOptions.None);
 
-                if (Convert.ToDouble(coords[coords.Length - 3]) == 0 || Convert.ToDouble(coords[coords.Length - 3]) == 1)
-                {
                     Info.Add(Convert.ToDouble(coords[coords.Length - 2]));
                     Info.Add(Convert.ToDouble(coords[coords.Length - 1]));
-                    Info.Add(0);
-                }
-
-                else
-                {
-                    Info.Add(Convert.ToDouble(coords[coords.Length - 3]));
-                    Info.Add(Convert.ToDouble(coords[coords.Length - 2]));
-                    Info.Add(Convert.ToDouble(coords[coords.Length - 1]));
-                }
-
 
                 tracedInfo.Add(Info);
             }
